@@ -1,0 +1,44 @@
+# Настройки для хостинга с Apache (Beget, Timeweb, REG.RU, Sprinthost и др.)
+AddDefaultCharset UTF-8
+DirectoryIndex index.html
+Options -Indexes
+
+# Служебные файлы не отдаём
+<FilesMatch "^(README\.md|\.htaccess)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+<IfModule mod_mime.c>
+  AddType font/woff .woff
+  AddType image/webp .webp
+  AddType image/svg+xml .svg
+</IfModule>
+
+# Сжатие
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript text/javascript application/json image/svg+xml
+</IfModule>
+
+# Кэш: картинки и шрифт – на месяц, стили и скрипты – на неделю
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType font/woff "access plus 30 days"
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+# Перенаправление на HTTPS (раскомментируйте, когда подключите SSL-сертификат)
+# RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteCond %{HTTP:X-Forwarded-Proto} !https
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
