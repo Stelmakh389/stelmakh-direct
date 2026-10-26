@@ -14,7 +14,7 @@
 <meta property="og:description" content="6 вопросов – прогноз бюджета и стоимости заявки по вашей нише. Бесплатный онлайн-разбор 30 минут.">
 <meta property="og:image" content="assets/img/og.jpg">
 <link rel="preload" href="assets/fonts/onest-var.woff" as="font" type="font/woff" crossorigin>
-<link rel="stylesheet" href="assets/css/style.css?v=20261025g">
+<link rel="stylesheet" href="assets/css/style.css?v=20261026a">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -74,6 +74,11 @@
           <a class="btn btn--accent btn--lg" href="#quiz" data-quiz-start>Рассчитать прогноз за 2 минуты<svg><use href="#i-arrow"/></svg></a>
           <a class="link" href="#call">Записаться на онлайн-разбор →</a>
         </div>
+        <ul class="hero__facts" aria-label="Коротко о нас">
+          <li><b>10 лет</b> в рекламе</li>
+          <li><b>140+</b> проектов</li>
+          <li><b>не больше 8</b> клиентов одновременно</li>
+        </ul>
       </div>
 
       <div class="hero__visual">
@@ -98,36 +103,24 @@
         <div class="chat__head">
           <img src="assets/img/avatar.webp" width="44" height="44" alt="">
           <div class="chat__who"><b>Андрей Стельмах</b><small><i class="dot-online"></i><span id="chat-status">на связи</span></small></div>
-          <a class="chat__progress" href="#plan" id="chat-progress">Прогноз: 0 из 6</a>
+          <a class="chat__progress" href="#plan" id="chat-progress">Прогноз</a>
         </div>
+        <div class="chat__bar" aria-hidden="true"><i id="chat-bar"></i></div>
         <div class="chat__log" id="chat-log" role="log" aria-live="polite" aria-relevant="additions"></div>
         <div class="chat__input" id="chat-input"></div>
       </div>
 
       <aside class="plan" id="plan" aria-labelledby="plan-title">
-        <div class="plan__head"><h3 id="plan-title">Ваш медиаплан</h3><small>предварительный</small></div>
-        <div class="plan__mini">
-          <div><small>Бюджет</small><b data-plan="budgetShort">–</b></div>
-          <div><small>Клики</small><b data-plan="clicks">–</b></div>
-          <div><small>Заявки</small><b data-plan="leads">–</b></div>
-          <div><small>Ср. цена заявки</small><b data-plan="cpl">–</b></div>
+        <div class="plan__head"><h3 id="plan-title">Ваш прогноз</h3><small id="plan-left">предварительный</small></div>
+        <p class="plan__context" id="plan-context" hidden></p>
+        <div class="plan__tiles">
+          <div class="plan__tile plan__tile--main"><small>Цена заявки</small><b data-plan="cpl">–</b></div>
+          <div class="plan__tile"><small>Заявки в месяц</small><b data-plan="leads">–</b></div>
+          <button class="plan__tile plan__tile--btn" type="button" id="plan-budget" disabled><small>Бюджет в месяц</small><b data-plan="budgetShort">–</b><em>изменить</em></button>
+          <div class="plan__tile"><small>Клики в месяц</small><b data-plan="clicks">–</b></div>
         </div>
-        <dl class="plan__rows">
-          <div><dt>Ниша</dt><dd data-plan="niche">–</dd></div>
-          <div><dt>Регион и конкуренция</dt><dd data-plan="region">–</dd></div>
-          <div><dt>Цена клика в нише</dt><dd data-plan="cpc">–</dd></div>
-          <div><dt>Точка старта</dt><dd data-plan="start">–</dd></div>
-          <div><dt>Сайт</dt><dd data-plan="site">–</dd></div>
-          <div><dt>Допустимая цена заявки</dt><dd data-plan="allowed">–</dd></div>
-          <div><dt>Бюджет в месяц</dt><dd data-plan="budget">–</dd></div>
-          <div><dt>Онлайн-разбор</dt><dd data-plan="slot">–</dd></div>
-        </dl>
-        <div class="plan__metrics">
-          <div><small>Клики в месяц</small><b data-plan="clicks">–</b></div>
-          <div><small>Заявки в месяц</small><b data-plan="leads">–</b></div>
-          <div><small>Цена заявки</small><b data-plan="cpl">–</b></div>
-        </div>
-        <p class="plan__verdict" id="plan-verdict" hidden><i></i><span></span></p>
+        <p class="plan__wait" id="plan-wait">Цифры появятся после вопроса о бюджете</p>
+        <p class="plan__verdict" id="plan-verdict" hidden><span></span></p>
         <p class="plan__note">Диапазоны – по средним данным ниши. Точный расчёт по Вордстату и аукциону вашего региона разберём на онлайн-разборе.</p>
       </aside>
     </div>
@@ -142,6 +135,10 @@
     </header>
     <div class="tabs" role="tablist" aria-label="Ниши" id="case-tabs"></div>
     <div id="case-panels"></div>
+    <div class="cta-row">
+      <a class="btn btn--accent" href="#quiz" data-quiz-start>Рассчитать свой прогноз<svg><use href="#i-arrow"/></svg></a>
+      <a class="link" href="#call">Записаться на онлайн-разбор →</a>
+    </div>
   </div>
 </section>
 
@@ -151,11 +148,11 @@
     <div class="team__row">
       <div class="team__media">
         <!-- Вертикальное видео 9:16. Файл и обложка подключены в config.js (videoUrl) и ниже -->
-        <button class="video-card" type="button" id="video-open" aria-label="Смотреть видео: о том, как мы работаем">
+        <div class="video-card" id="video-card">
           <img src="assets/img/video-cover.webp" width="810" height="1440" alt="" loading="lazy">
-          <span class="video-card__play"><svg><use href="#i-play"/></svg></span>
+          <button class="video-card__play" type="button" id="video-open" aria-label="Смотреть видео: о том, как мы работаем"><svg><use href="#i-play"/></svg></button>
           <span class="video-card__caption"><b>О том, как мы работаем</b><small>Андрей Стельмах · 0:55</small></span>
-        </button>
+        </div>
       </div>
       <div class="team__text">
         <header class="section-head section-head--tight">
@@ -169,10 +166,10 @@
           <li><b>32</b><span>клиента с нами больше года</span></li>
         </ul>
         <ul class="principles">
-          <li class="is-key"><span class="principles__icon"><svg><use href="#i-pause"/></svg></span><b>Не откручиваем бюджет вслепую</b><span>Что-то идёт не по плану – ставим на паузу и чиним, а не ждём следующей оплаты.</span></li>
-          <li><span class="principles__icon"><svg><use href="#i-clock"/></svg></span><b>Не обещаем заявки в первый день</b><span>Первые 2–4 недели кампании учатся, мы чистим площадки и минусуем мусор.</span></li>
+          <li class="is-key"><span class="principles__icon"><svg><use href="#i-pause"/></svg></span><b>Бюджет под контролем</b><span>Что-то идёт не по плану – ставим кампанию на паузу и чиним, а не ждём следующей оплаты.</span></li>
+          <li><span class="principles__icon"><svg><use href="#i-clock"/></svg></span><b>Честные сроки</b><span>Первые 2–4 недели кампании учатся: чистим площадки и минусуем мусор, дальше заявки идут стабильно.</span></li>
           <li><span class="principles__icon"><svg><use href="#i-ruble"/></svg></span><b>Отчёт в деньгах</b><span>Сколько заявок, по какой цене, что сделали и что дальше – одной страницей.</span></li>
-          <li><span class="principles__icon"><svg><use href="#i-no"/></svg></span><b>Говорим «нет»</b><span>Если реклама вам сейчас не окупится, скажем это на онлайн-разборе.</span></li>
+          <li><span class="principles__icon"><svg><use href="#i-target"/></svg></span><b>Честный прогноз</b><span>Если реклама вам сейчас не окупится, скажем это на онлайн-разборе – до того, как вы заплатите.</span></li>
         </ul>
       </div>
     </div>
@@ -193,30 +190,33 @@
     <!-- Фото: 3:4, например 600×800, webp. Положите в assets/img/team/ и замените <span>А</span> на <img src="assets/img/team/anna.webp" width="600" height="800" alt="" loading="lazy">, а у блока уберите класс member__photo--empty -->
     <ul class="crew__track" id="crew-track">
         <li class="member member--lead">
-          <div class="member__photo"><img src="assets/img/team/andrei.webp?v=4" width="840" height="1120" alt="Андрей Стельмах" loading="lazy"></div>
+          <div class="member__photo"><img src="assets/img/team/andrei.webp?v=4" width="840" height="1120" alt="Андрей Стельмах" loading="lazy" data-crew-img></div>
           <div class="member__body"><b>Андрей</b><p>Стратегия проектов и настройка рекламы</p><span class="member__tag">Ведёт ваш проект</span></div>
         </li>
         <li class="member">
-          <div class="member__photo"><img src="assets/img/team/anna.webp" width="840" height="1120" alt="Анна" loading="lazy"></div>
-          <div class="member__body"><b>Анна</b><p>Копает аналитику и отчёты, чтобы реклама работала эффективнее</p></div>
+          <div class="member__photo"><img src="assets/img/team/anna.webp" width="840" height="1120" alt="Анна" loading="lazy" data-crew-img></div>
+          <div class="member__body"><b>Анна</b><p>Аналитика и отчёты по рекламе</p></div>
         </li>
         <li class="member">
-          <div class="member__photo"><img src="assets/img/team/elena.webp" width="840" height="1120" alt="Елена" loading="lazy"></div>
+          <div class="member__photo"><img src="assets/img/team/elena.webp" width="840" height="1120" alt="Елена" loading="lazy" data-crew-img></div>
           <div class="member__body"><b>Елена</b><p>Дизайн сайтов и рекламных баннеров</p></div>
         </li>
         <li class="member">
-          <div class="member__photo"><img src="assets/img/team/evgeniy.webp" width="840" height="1120" alt="Евгений" loading="lazy"></div>
+          <div class="member__photo"><img src="assets/img/team/evgeniy.webp" width="840" height="1120" alt="Евгений" loading="lazy" data-crew-img></div>
           <div class="member__body"><b>Евгений</b><p>Посадочные страницы под рекламу и корпоративные сайты</p></div>
         </li>
         <li class="member">
-          <div class="member__photo"><img src="assets/img/team/arsen.webp?v=4" width="840" height="1120" alt="Арсен" loading="lazy"></div>
+          <div class="member__photo"><img src="assets/img/team/arsen.webp?v=4" width="840" height="1120" alt="Арсен" loading="lazy" data-crew-img></div>
           <div class="member__body"><b>Арсен</b><p>Безопасность наших сайтов</p></div>
         </li>
         <li class="member">
-          <div class="member__photo"><img src="assets/img/team/irina.webp" width="840" height="1120" alt="Ирина" loading="lazy"></div>
+          <div class="member__photo"><img src="assets/img/team/irina.webp" width="840" height="1120" alt="Ирина" loading="lazy" data-crew-img></div>
           <div class="member__body"><b>Ирина</b><p>Юрист: готовит документы сайта по <span class="nobr">152-ФЗ</span></p></div>
         </li>
     </ul>
+    <div class="cta-row">
+      <a class="btn btn--accent" href="#call">Записаться на онлайн-разбор<svg><use href="#i-arrow"/></svg></a>
+    </div>
   </div>
 </section>
 
@@ -234,11 +234,16 @@
     </div>
 
     <div class="booking panel" id="booking">
+      <div class="host">
+        <img src="assets/img/avatar.webp" width="64" height="64" alt="Андрей Стельмах" loading="lazy">
+        <p><b>Разбор проводит лично Андрей.</b> Zoom или Яндекс Телемост – как удобнее.</p>
+      </div>
       <form class="booking__form" id="booking-form" novalidate>
         <div class="booking__head">
           <h3>Запись на онлайн-разбор</h3>
           <small>30 минут · время московское</small>
         </div>
+        <p class="booking__forecast" id="booking-forecast" hidden></p>
         <ol class="bsteps" id="booking-steps">
           <li><button type="button" data-goto="1"><i>1</i><span>Дата</span></button></li>
           <li><button type="button" data-goto="2"><i>2</i><span>Время</span></button></li>
@@ -267,12 +272,11 @@
         <h3>Осталось подтвердить время в боте</h3>
         <p>Вы выбрали <b id="booking-when"></b>. Мы открыли <span id="booking-messenger"></span> – нажмите «Старт» и кнопку «Подтверждаю». Там же придёт напоминание и ссылка на созвон.</p>
         <p class="booking__code">Бот не ответил? Отправьте ему код <code data-lead-code></code></p>
-        <a class="btn btn--accent" href="#" id="booking-reopen" target="_blank" rel="noopener">Открыть бота ещё раз</a>
-        <button class="textbtn" type="button" id="booking-again">Выбрать другое время</button>
-      </div>
-      <div class="host">
-        <img src="assets/img/avatar.webp" width="64" height="64" alt="Андрей Стельмах" loading="lazy">
-        <p><b>Разбор проводит лично Андрей.</b> Zoom или Яндекс Телемост – как удобнее.</p>
+        <div class="booking__done-row">
+          <a class="btn btn--accent" href="#" id="booking-reopen" target="_blank" rel="noopener">Открыть бота ещё раз</a>
+          <a class="btn btn--line" href="#" id="booking-switch" target="_blank" rel="noopener">Лучше в Telegram</a>
+        </div>
+        <button class="textbtn" type="button" id="booking-again">Перенести на другое время</button>
       </div>
     </div>
   </div>
@@ -301,20 +305,17 @@
 </footer>
 
 <div class="cookie" id="cookie" role="region" aria-label="Уведомление о cookie" hidden>
-  <p>Сайт использует cookie и Яндекс Метрику, чтобы считать заявки и улучшать рекламу. Подробнее – в <a href="politika.html">Политике обработки персональных данных</a>.</p>
+  <p>Используем cookie и Яндекс Метрику, чтобы считать заявки. <a href="politika.html">Подробнее</a></p>
   <div class="cookie__actions">
-    <button class="btn btn--ghost btn--sm" type="button" data-cookie="necessary">Только необходимые</button>
-    <button class="btn btn--accent btn--sm" type="button" data-cookie="all">Принять</button>
+    <button class="cookie__btn" type="button" data-cookie="necessary">Только нужные</button>
+    <button class="cookie__btn cookie__btn--ok" type="button" data-cookie="all">Ок</button>
   </div>
 </div>
 
-<dialog class="video-dialog" id="video-dialog" aria-label="Видео о том, как мы работаем">
-  <button class="video-dialog__close" type="button" id="video-close" aria-label="Закрыть видео"><svg><use href="#i-close"/></svg></button>
-  <div class="video-dialog__body" id="video-body"></div>
-</dialog>
+<a class="float-cta" id="float-cta" href="#quiz" data-quiz-start hidden>Рассчитать прогноз<svg><use href="#i-arrow"/></svg></a>
 
-<script src="assets/js/config.js?v=20261025g"></script>
-<script src="assets/js/data.js?v=20261025g"></script>
-<script src="assets/js/main.js?v=20261025g"></script>
+<script src="assets/js/config.js?v=20261026a"></script>
+<script src="assets/js/data.js?v=20261026a"></script>
+<script src="assets/js/main.js?v=20261026a"></script>
 </body>
 </html>

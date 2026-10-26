@@ -200,7 +200,13 @@ function http_json(string $url, string $method = 'GET', ?array $body = null, arr
     $headers[] = 'Accept: application/json';
     if ($payload !== null) $headers[] = 'Content-Type: application/json';
     if (function_exists('curl_init')) {
-        $ch = curl_init($url);
+        /* Одно соединение на весь запуск: к api.telegram.org не устанавливаем TLS заново на каждый вызов – это заметно быстрее */
+        static $pool = [];
+        $host = (string)parse_url($url, PHP_URL_HOST);
+        if (!isset($pool[$host])) $pool[$host] = curl_init();
+        $ch = $pool[$host];
+        curl_reset($ch);
+        curl_setopt($ch, CURLOPT_URL, $url);
         $opt = [
             CURLOPT_CUSTOMREQUEST => $method, CURLOPT_RETURNTRANSFER => true, CURLOPT_HTTPHEADER => $headers,
             CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_TIMEOUT => $timeout,
@@ -211,7 +217,7 @@ function http_json(string $url, string $method = 'GET', ?array $body = null, arr
         $res = curl_exec($ch);
         $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $err = $res === false ? curl_error($ch) : '';
-        curl_close($ch);
+        if ($res === false) { curl_close($ch); unset($pool[$host]); }
     } else {
         $ctx = ['http' => ['method' => $method, 'header' => implode("\r\n", $headers), 'timeout' => $timeout, 'ignore_errors' => true]];
         if ($payload !== null) $ctx['http']['content'] = $payload;
@@ -314,8 +320,15 @@ function bot_delete(string $m, $chat, string $mid): bool {
 
 function bot_answer(string $m, string $cbId, string $text = ''): void {
     if ($cbId === '') return;
-    if ($m === 'telegram') { tg_call('answerCallbackQuery', ['callback_query_id' => $cbId, 'text' => $text]); return; }
-    max_call('POST', 'answers', ['callback_id' => $cbId], ['notification' => $text !== '' ? $text : 'Готово']);
+    if ($m === 'telegram') {
+        /* На нажатие в Telegram отвечаем сразу при получении (tg_process_update) – здесь повторно не шлём */
+        if (isset($GLOBALS['tg_answered'][$cbId])) return;
+        tg_call('answerCallbackQuery', ['callback_query_id' => $cbId, 'text' => $text]);
+        return;
+    }
+    /* В Max всплывашка закрывает кнопки – показываем её только с осмысленным текстом */
+    if ($text === '') return;
+    max_call('POST', 'answers', ['callback_id' => $cbId], ['notification' => $text]);
 }
 
 /* ===================== Форматирование ===================== */
@@ -456,12 +469,16 @@ function admin_card(array $lead): array {
         $t .= "\n<b>Ответы в квизе</b>\n";
         foreach ($lead['answers'] as $a) $t .= '• ' . h($a['q'] ?? '') . ' – <b>' . h($a['a'] ?? '') . "</b>\n";
     }
+    if (!empty($lead['bot_answers'])) {
+        $t .= "\n<b>Ответы в боте</b>\n";
+        foreach ($lead['bot_answers'] as $a) $t .= '• ' . h($a['q'] ?? '') . ' – <b>' . h($a['a'] ?? '') . "</b>\n";
+    }
     $f = $lead['forecast'] ?? [];
     if ($f) {
         $parts = [];
         if (!empty($f['cpc'])) $parts[] = 'клик ' . $f['cpc'];
         if (!empty($f['leads'])) $parts[] = 'заявок ' . $f['leads'];
-        if (!empty($f['cpl'])) $parts[] = 'заявка ' . $f['cpl'];
+        if (!empty($f['cpl'])) $parts[] = 'заявка ' . money_short((string)$f['cpl']);
         if ($parts) $t .= "\n<b>Прогноз:</b> " . h(implode(', ', $parts)) . "\n";
     }
     $t .= "\n" . ($c
@@ -489,7 +506,7 @@ function client_card(array $lead): array {
     $t .= 'Когда: <b>' . h($when) . '</b> по Москве' . "\n";
     $t .= 'Формат: видеозвонок на 30 минут, Телемост или Zoom' . "\n";
     $f = $lead['forecast'] ?? [];
-    if (!empty($f['cpl'])) $t .= 'Ориентир из квиза: заявка ' . h($f['cpl']) . (!empty($f['leads']) ? ', ' . h($f['leads']) . ' заявок в месяц' : '') . "\n";
+    if (!empty($f['cpl'])) $t .= 'Ориентир из квиза: заявка ' . h(money_short((string)$f['cpl'])) . (!empty($f['leads']) ? ', ' . h($f['leads']) . ' заявок в месяц' : '') . "\n";
     if ($st === 'confirmed') {
         $t .= "\n✅ Время подтверждено. Напомню накануне, за час и за 15 минут до начала, а ссылку на созвон пришлю сюда.\nЕсли появится вопрос – пишите прямо сюда, отвечу лично.";
         return [$t, array_merge([[['text' => 'Перенести', 'data' => 'rs:' . $id], ['text' => 'Отменить', 'data' => 'cx:' . $id]]], contact_row($lead), owner_row($lead))];
@@ -497,7 +514,7 @@ function client_card(array $lead): array {
     $t .= "\nПодтвердите, пожалуйста, время – и я забронирую его за вами.";
     return [$t, array_merge([
         [['text' => '✅ Подтверждаю', 'data' => 'ok:' . $id]],
-        [['text' => 'Другое время', 'data' => 'rs:' . $id], ['text' => 'Отменить', 'data' => 'cx:' . $id]],
+        [['text' => 'Перенести', 'data' => 'rs:' . $id], ['text' => 'Отменить', 'data' => 'cx:' . $id]],
     ], contact_row($lead), owner_row($lead))];
 }
 
@@ -520,7 +537,7 @@ function phone_ask(array $lead): array {
     $when = slot_label($lead['slot_date'] ?? null, $lead['slot_time'] ?? null);
     return ['📱 Чтобы закрепить время <b>' . h($when) . '</b> МСК, поделитесь номером телефона – нажмите кнопку ниже.' . "\n\n"
         . 'Я напишу или позвоню в день разбора и пришлю ссылку на созвон. Номер нужен только для этого.',
-        array_merge(contact_row($lead), [[['text' => 'Другое время', 'data' => 'rs:' . $lead['id']]]], owner_row($lead))];
+        array_merge(contact_row($lead), [[['text' => 'Перенести', 'data' => 'rs:' . $lead['id']]]], owner_row($lead))];
 }
 
 /** Достать номер из vCard: «TEL;TYPE=cell:+79991234567» → 79991234567 */
@@ -545,7 +562,8 @@ function client_contact(string $m, $chat, array $u, string $vcf): void {
     }
     if ($confirmed) {
         [$t, $b] = client_card($lead);
-        bot_send($m, $chat, 'Спасибо, номер сохранил. Напишу или позвоню только по поводу разбора.' . "\n\n" . $t, $b);
+        bot_send($m, $chat, '✅ <b>Записал вас на ' . h(slot_label($lead['slot_date'] ?? null, $lead['slot_time'] ?? null)) . '</b> МСК. Спасибо, номер сохранил – напишу или позвоню только по поводу разбора.' . "\n\n" . $t, $b);
+        if (empty($lead['answers']) && empty($lead['mq'])) mq_ask($m, $chat, $lead, 1);
     } else if ($lead && !empty($lead['pending_ok']) && ($lead['status'] ?? '') !== 'confirmed') {
         bot_send($m, $chat, 'Спасибо, номер сохранил. Но выбранное время уже недоступно – выберите другое (время московское):', days_keyboard($id));
     } else {
@@ -637,7 +655,18 @@ function notify_admins(string $leadId, string $html): void {
 }
 
 /* ===================== Сценарий клиента ===================== */
-function user_name(array $u): string { return trim((string)($u['name'] ?? '')); }
+/** «1 250–2 100 ₽» → «1,3–2,1 тыс. ₽»: телефон не принимает диапазон за номер и не делает его ссылкой. */
+function money_short(string $s): string {
+    $n = array_map(function ($x) { return (int)preg_replace('/\D/u', '', $x); }, preg_split('/[–-]/u', preg_replace('/[^\d\s\x{00A0}\x{202F}–-]/u', '', $s)) ?: []);
+    $n = array_values(array_filter($n));
+    if (!$n || max($n) < 1000) return $s;
+    $k = function ($v) { $r = round($v / 1000, $v < 10000 ? 1 : 0); return str_replace('.', ',', (string)$r); };
+    return implode('–', array_map($k, $n)) . ' тыс. ₽';
+}
+
+/** Имя без букв («.», «—», эмодзи) считаем пустым. */
+function clean_name(string $s): string { $s = trim($s); return preg_match('/\p{L}/u', $s) ? $s : ''; }
+function user_name(array $u): string { return clean_name((string)($u['name'] ?? '')); }
 
 function bind_client(string $id, string $m, $chat, array $u): ?array {
     chat_bind($m, $chat, $id);
@@ -669,7 +698,7 @@ function client_start(string $m, $chat, array $u, string $payload): void {
     $lead = bind_client($id, $m, $chat, $u);
     if (!$lead) return;
 
-    $name = trim((string)($u['first'] ?? '')) ?: user_name($u);
+    $name = clean_name((string)($u['first'] ?? '')) ?: user_name($u);
     $hello = 'Здравствуйте' . ($name !== '' ? ', ' . h($name) : '') . '! Это ' . h(owner_full()) . ', я настраиваю Яндекс.Директ.';
     if (!slot_future($lead)) {
         $txt = $hello . "\n\nЗапишу вас на бесплатный онлайн-разбор рекламы – 30 минут по видеосвязи. Выберите удобный день:\n\n<i>" . policy_line() . '</i>';
@@ -717,6 +746,7 @@ function client_callback(string $m, $chat, array $u, string $data, string $cbId,
         bot_answer($m, $cbId, 'Записал!');
         [$t, $b] = client_card($lead);
         $show($t, $b);
+        if ($was !== 'confirmed') client_success($m, $chat, $lead, false);
         cards_refresh($id);
         if ($was !== 'confirmed') notify_admins($id, '✅ ' . client_short($lead) . ': время подтверждено – <b>' . h(slot_label($lead['slot_date'], $lead['slot_time'])) . '</b> МСК');
         return;
@@ -769,6 +799,7 @@ function client_callback(string $m, $chat, array $u, string $data, string $cbId,
         bot_answer($m, $cbId, 'Записал!');
         [$t, $b] = client_card($lead);
         $show($t, $b);
+        client_success($m, $chat, $lead, (bool)$old && $old !== slot_label($date, $time));
         cards_refresh($id);
         $new = slot_label($date, $time);
         notify_admins($id, ($old && $old !== $new ? '🔁 ' . client_short($lead) . ': перенос – ' . h($old) . ' → <b>' . h($new) . '</b>' : '✅ ' . client_short($lead) . ': записан на <b>' . h($new) . '</b>') . ' МСК');
@@ -784,11 +815,79 @@ function client_callback(string $m, $chat, array $u, string $data, string $cbId,
     }
     if ($act === 'yes') {
         bot_answer($m, $cbId, 'Отлично, до встречи!');
+        bot_send($m, $chat, '👍 Отлично, до встречи ' . h(slot_label($lead['slot_date'] ?? null, $lead['slot_time'] ?? null)) . ' МСК!');
         lead_update($id, function ($l) { lead_event($l, 'will_come'); return $l; });
         notify_admins($id, '👍 ' . client_short($lead) . ': будет на разборе');
         return;
     }
+    if ($act === 'mq' && isset($parts[2], $parts[3])) { bot_answer($m, $cbId); mq_answer($m, $chat, $id, (int)$parts[2], (string)$parts[3], $mid); return; }
     bot_answer($m, $cbId);
+}
+
+/* ---------- Сообщение «Записал» и короткий опрос перед разбором ---------- */
+function client_success(string $m, $chat, array $lead, bool $moved): void {
+    $when = slot_label($lead['slot_date'] ?? null, $lead['slot_time'] ?? null);
+    bot_send($m, $chat, '✅ <b>' . ($moved ? 'Перенёс запись на ' : 'Записал вас на ') . h($when) . '</b> МСК.' . "\n" . 'Напомню накануне, за час и за 15 минут до начала, ссылку на созвон пришлю сюда.');
+    if (empty($lead['answers']) && empty($lead['mq'])) mq_ask($m, $chat, $lead, 1);
+}
+/* Если человек записался через форму, а не через квиз, – три вопроса, чтобы подготовиться к разбору. Не обязательно. */
+function mq_steps(): array {
+    return [
+        1 => ['q' => 'Чем занимается ваш бизнес?', 'opts' => ['b2c' => 'Услуги для людей', 'b2b' => 'Услуги для бизнеса', 'prod' => 'Производство, опт', 'build' => 'Ремонт и стройка', 'shop' => 'Интернет-магазин', 'text' => 'Напишу своими словами']],
+        2 => ['q' => 'Какой бюджет на рекламу в месяц комфортен?', 'opts' => ['b1' => 'до 30 тыс. ₽', 'b2' => '30–70 тыс. ₽', 'b3' => '70–150 тыс. ₽', 'b4' => 'больше 150 тыс. ₽', 'b0' => 'Пока не знаю']],
+        3 => ['q' => 'Реклама в Директе сейчас идёт?', 'opts' => ['run' => 'Да, идёт', 'was' => 'Была раньше', 'no' => 'Ещё не запускали']],
+    ];
+}
+function mq_ask(string $m, $chat, array $lead, int $step): void {
+    $st = mq_steps()[$step] ?? null;
+    if (!$st) return;
+    $id = $lead['id'];
+    $rows = []; $row = [];
+    foreach ($st['opts'] as $k => $label) {
+        $row[] = ['text' => $label, 'data' => 'mq:' . $id . ':' . $step . ':' . $k];
+        if (count($row) === 2) { $rows[] = $row; $row = []; }
+    }
+    if ($row) $rows[] = $row;
+    $rows[] = [['text' => 'Пропустить вопросы', 'data' => 'mq:' . $id . ':' . $step . ':skip']];
+    $head = $step === 1 ? 'Чтобы подготовиться к разбору, ответьте на 3 коротких вопроса (можно пропустить).' . "\n\n" : '';
+    bot_send($m, $chat, $head . '<b>' . $step . '/3.</b> ' . h($st['q']), $rows);
+}
+function mq_save(string $id, int $step, string $answer): ?array {
+    $q = mq_steps()[$step]['q'] ?? '';
+    return lead_update($id, function ($l) use ($q, $answer, $step) {
+        if (!$l) return null;
+        $l['bot_answers'] = array_values(array_filter((array)($l['bot_answers'] ?? []), function ($a) use ($q) { return ($a['q'] ?? '') !== $q; }));
+        $l['bot_answers'][] = ['q' => $q, 'a' => $answer];
+        $l['mq'] = $step; unset($l['mq_wait']);
+        return $l;
+    });
+}
+function mq_answer(string $m, $chat, string $id, int $step, string $k, ?string $mid): void {
+    $st = mq_steps()[$step] ?? null;
+    $lead = lead_get($id);
+    if (!$st || !$lead) return;
+    if ($k === 'skip') {
+        lead_update($id, function ($l) { if (!$l) return null; $l['mq'] = 9; unset($l['mq_wait']); return $l; });
+        if ($mid !== null) bot_edit($m, $chat, $mid, 'Хорошо, обсудим всё на разборе.', []);
+        return;
+    }
+    if ($k === 'text') {
+        lead_update($id, function ($l) use ($step) { if (!$l) return null; $l['mq_wait'] = $step; return $l; });
+        if ($mid !== null) bot_edit($m, $chat, $mid, '<b>' . $step . '/3.</b> ' . h($st['q']) . "\n\n" . 'Напишите ответ одним сообщением.', []);
+        return;
+    }
+    $label = $st['opts'][$k] ?? null;
+    if ($label === null) return;
+    mq_save($id, $step, $label);
+    if ($mid !== null) bot_edit($m, $chat, $mid, '<b>' . $step . '/3.</b> ' . h($st['q']) . ' – <b>' . h($label) . '</b>', []);
+    mq_next($m, $chat, $id, $step);
+}
+function mq_next(string $m, $chat, string $id, int $step): void {
+    $lead = lead_get($id);
+    if (!$lead) return;
+    if ($step < 3) { mq_ask($m, $chat, $lead, $step + 1); return; }
+    bot_send($m, $chat, 'Спасибо! Учту это, когда буду готовиться к разбору.');
+    cards_refresh($id);
 }
 
 /** Обычное сообщение клиента – пересылаем владельцу. $copy – для Telegram: переслать вложение копией. */
@@ -802,6 +901,14 @@ function client_message(string $m, $chat, array $u, string $text, string $mid, b
     if (!$lead) { $id = lead_new_id(); $lead = bind_client($id, $m, $chat, $u); }
     else if (($lead['client']['chat'] ?? '') !== (string)$chat) { $lead = bind_client($id, $m, $chat, $u); }
     if (!$lead) return;
+
+    /* Ответ своими словами на вопрос перед разбором */
+    if (!empty($lead['mq_wait']) && $t !== '' && !$hasMedia) {
+        $step = (int)$lead['mq_wait'];
+        mq_save($id, $step, u_sub($t, 0, 300));
+        mq_next($m, $chat, $id, $step);
+        return;
+    }
 
     $first = empty($lead['msgs']);
     $lead = lead_update($id, function ($l) use ($t) { $l['msgs'] = (int)($l['msgs'] ?? 0) + 1; $l['last_in'] = date('c'); lead_event($l, 'msg_in', $t); return $l; });
@@ -1315,6 +1422,8 @@ function tg_process_update(array $u): void {
         } elseif (isset($u['callback_query'])) {
             $cb = $u['callback_query'];
             $chatId = $cb['message']['chat']['id'] ?? null;
+            /* Сразу убираем «часики» с кнопки, а уже потом делаем работу */
+            if (!empty($cb['id'])) { tg_call('answerCallbackQuery', ['callback_query_id' => (string)$cb['id']]); $GLOBALS['tg_answered'][(string)$cb['id']] = true; }
             if ($chatId !== null) {
                 client_callback('telegram', $chatId, tg_user($cb['from'] ?? []), (string)($cb['data'] ?? ''), (string)$cb['id'], isset($cb['message']['message_id']) ? (string)$cb['message']['message_id'] : null);
             } else {

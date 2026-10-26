@@ -43,6 +43,11 @@
   function lget(k) { return safe(function () { return localStorage.getItem(k); }, null); }
   function lset(k, v) { safe(function () { localStorage.setItem(k, v); }); }
   function scrollToEl(node) { if (node) node.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  function plural(n, one, few, many) { var a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 10 || b >= 20) ? few : many; }
+  function isMobile() { return safe(function () { return matchMedia('(max-width: 640px)').matches; }, false); }
+  /* Запись на разбор – общая для квиза и формы внизу: записался в одном месте, другое это знает */
+  function getBooked() { return safe(function () { return JSON.parse(sget('booked') || 'null'); }, null); }
+  function setBooked(v) { sset('booked', v ? JSON.stringify(v) : ''); safe(function () { document.dispatchEvent(new CustomEvent('booked')); }); }
 
   /* ===================== Анимации: бегущие цифры и появление блоков ===================== */
   var motionOK = 'IntersectionObserver' in window && 'requestAnimationFrame' in window &&
@@ -214,7 +219,7 @@
 
     var QUESTIONS = 6;
     var STEPS = [
-      { q: 'Привет! Я Андрей. Задам 6 коротких вопросов и по ходу соберу прогноз: сколько стоит заявка в вашей нише и с какого бюджета есть смысл стартовать. С чего начнём?',
+      { q: 'Привет! Я Андрей. Задам несколько коротких вопросов и по ходу соберу прогноз: сколько стоит заявка в вашей нише и с какого бюджета есть смысл стартовать. С чего начнём?',
         kind: 'start',
         opts: function () { return [
           { k: 'seg:fresh', l: 'Ещё не запускал Директ', t: 'Посчитаем бюджет и цену заявки с нуля', i: 'i-spark' },
@@ -229,21 +234,30 @@
         } },
       { q: 'Чем занимается ваш бизнес?', opts: function () { return optsOf(N); }, react: function (k) { return N[k].react; } },
       { q: 'Где ищете клиентов?', opts: function () { return optsOf(R); }, react: function (k) { return R[k].react; } },
-      { q: 'Запускали уже рекламу в Директе?', opts: function () { return optsOf(S); }, react: function (k) { return S[k].react; } },
-      { q: 'Есть сайт, куда вести рекламу?', opts: function () { return optsOf(SI); }, react: function (k) { return SI[k].react; } },
+      /* Если на старте уже сказали «ещё не запускал» или «нет сайта» – второй раз не спрашиваем */
+      { q: 'Запускали уже рекламу в Директе?', q2: 'Кто вёл рекламу?',
+        opts: function () { var o = optsOf(S); return st.answers[0] && st.answers[0].k === 'seg:burned' ? o.filter(function (x) { return x.k !== 'fresh'; }) : o; },
+        auto: function (a) { return a[0] === 'seg:fresh' ? { k: 'fresh', l: S.fresh.label } : null; },
+        react: function (k) { return S[k].react; } },
+      { q: 'Есть сайт, куда вести рекламу?', opts: function () { return optsOf(SI); },
+        auto: function (a) { return a[0] === 'seg:nosite' ? { k: 'none', l: SI.none.label } : null; },
+        react: function (k) { return SI[k].react; } },
       { q: 'Сколько в среднем приносит один клиент?', opts: function () { return optsOf(C); }, react: function () { return null; } },
       { q: 'Какой бюджет на рекламу в месяц комфортен?', opts: function () { return optsOf(B); },
         react: function (k, a) {
-          if (k === 'b0') return 'Для старта предлагаю около 60 тыс. ₽ в месяц – этого хватит, чтобы кампании обучились. Учёл в прогнозе.';
-          if (k === 'b1' && (a[1] === 'b2b' || a[1] === 'prod' || a[1] === 'build')) return 'Скажу честно: при таком бюджете в вашей нише заявок будет немного. Вариант – стартовать только с самых горячих запросов на поиске. Учёл это в прогнозе.';
-          return null;
+          var pre = '';
+          if (k === 'b0') pre = 'Для старта предлагаю около 60 тыс. ₽ в месяц – этого хватит, чтобы кампании обучились. ';
+          else if (k === 'b1' && (a[1] === 'b2b' || a[1] === 'prod' || a[1] === 'build')) pre = 'Скажу честно: при таком бюджете в вашей нише заявок будет немного – начинать стоит с самых горячих запросов на поиске. ';
+          var f = forecast();
+          if (!f.cpl) return pre || null;
+          return pre + 'Прогноз готов: ' + f.leads + ' ' + plural(+f.leads.split('–').pop(), 'заявка', 'заявки', 'заявок') + ' в месяц по ' + f.cpl + ' при бюджете ' + f.budgetShort + '.' + (f.verdict ? ' ' + f.verdict.short : '');
         } },
-      { q: 'Прогноз готов – он справа. Следующий шаг – бесплатный онлайн-разбор: 30 минут в Zoom или Телемосте. Разберу вашу нишу, конкурентов и рекламу и покажу точные цифры. Выберите удобный день:',
+      { q: 'Следующий шаг – бесплатный онлайн-разбор: 30 минут в Zoom или Телемосте. Разберу вашу нишу, конкурентов и рекламу и покажу точные цифры. Выберите удобный день:',
         kind: 'day', opts: function () { return DAYS.slice(st.dayPage * PAGE, st.dayPage * PAGE + PAGE).map(function (d) { return { k: d.iso, l: dayLabel(d), d: d }; }); }, react: function () { return null; } },
       { q: 'Во сколько удобно? Время московское.', opts: function () { var d = st.answers[7] && findDay(st.answers[7].k); return (d ? d.slots : SLOTS).map(function (t) { return { k: t, l: t }; }); }, react: function () { return null; } }
     ];
 
-    var st = { answers: [], typing: false, confirmed: null, consent: false, dayPage: 0 };
+    var st = { answers: [], typing: false, confirmed: null, consent: false, dayPage: 0, showAll: false, acted: false };
     var saved = safe(function () { return JSON.parse(sget('quiz') || 'null'); }, null);
     if (saved && Array.isArray(saved.answers) && saved.answers.length <= STEPS.length) { st.answers = saved.answers; st.confirmed = saved.confirmed || null; }
     /* Выбранное раньше время прошло или его заняли – просим выбрать заново */
@@ -268,16 +282,20 @@
       return { date: day.k, time: time.k, label: day.l + ' в ' + time.l, tz: 'Europe/Moscow' };
     }
 
+    function qOf(i) { return STEPS[i].q2 && st.answers[0] && st.answers[0].k === 'seg:burned' ? STEPS[i].q2 : STEPS[i].q; }
+    /* Записался через форму внизу, а квиз не подтверждал */
+    function bookedElsewhere() { var b = getBooked(); return !!(b && b.source === 'form' && !st.confirmed); }
     function messages() {
       var a = amap(), out = [];
       st.answers.forEach(function (x, i) {
-        out.push({ key: 'q' + i, me: false, text: STEPS[i].q });
+        if (x.auto) return;
+        out.push({ key: 'q' + i, me: false, text: qOf(i) });
         out.push({ key: 'a' + i + ':' + x.k, me: true, text: x.l });
         var r = STEPS[i].react(x.k, a);
         if (r) out.push({ key: 'r' + i + ':' + x.k, me: false, text: r });
       });
       if (!st.typing) {
-        if (!done()) out.push({ key: 'q' + st.answers.length, me: false, text: STEPS[st.answers.length].q });
+        if (!done()) { if (!(st.answers.length === 7 && bookedElsewhere())) out.push({ key: 'q' + st.answers.length, me: false, text: qOf(st.answers.length) }); }
         else {
           out.push({ key: 'booked:' + slot().label, me: false, text: 'Записал вас на ' + slot().label + '. Остался один шаг – подтвердите запись в мессенджере. Туда же пришлю ссылку на созвон и напомню накануне и перед началом.' });
           if (st.confirmed) {
@@ -299,12 +317,21 @@
       for (; i < list.length; i++) {
         var node = el('div', { class: 'msg ' + (list[i].me ? 'msg--me' : 'msg--bot'), text: list[i].text });
         log.appendChild(node);
-        rendered.push({ key: list[i].key, node: node });
+        rendered.push({ key: list[i].key, node: node, me: list[i].me });
       }
       if (st.typing) {
         typingNode = el('div', { class: 'msg msg--bot msg--typing', 'aria-label': 'Андрей печатает' }, [el('i'), el('i'), el('i')]);
         log.appendChild(typingNode);
       }
+      /* Текущий вопрос подсвечен, прошлые – приглушены */
+      rendered.forEach(function (r, j) { r.node.classList.remove('msg--current'); });
+      if (!st.typing && !done()) for (var c = rendered.length - 1; c >= 0; c--) { if (!rendered[c].me) { rendered[c].node.classList.add('msg--current'); break; } }
+      /* На телефоне лента не прокручивается внутри: показываем последние 4 сообщения, остальное – по кнопке */
+      var hide = isMobile() && !st.showAll ? Math.max(0, rendered.length - 4) : 0;
+      rendered.forEach(function (r, j) { r.node.classList.toggle('is-old', j < hide); });
+      var more = $('.chat__more', log);
+      if (hide && !more) { more = el('button', { class: 'chat__more textbtn', type: 'button', text: 'Показать всю переписку', onclick: function () { st.showAll = true; renderLog(); } }); log.insertBefore(more, log.firstChild); }
+      else if (!hide && more) more.remove();
       log.scrollTop = log.scrollHeight;
     }
 
@@ -322,6 +349,7 @@
           sendLead({ type: 'quiz_booking', messenger: key, consent: true, slot: slot(), quiz: summary() });
           goal('booking_confirm', { messenger: key, source: 'quiz' });
           st.confirmed = key; save();
+          setBooked({ source: 'quiz', messenger: key, label: slot().label, date: slot().date, time: slot().time });
           setTimeout(update, 50);
         }
       }, [icon(key === 'telegram' ? 'i-plane' : 'i-bubble'), 'Подтвердить в ' + m.name]);
@@ -331,30 +359,38 @@
       input.textContent = '';
       if (st.typing) return;
       var tools = el('div', { class: 'chat__tools' });
-      if (!done()) {
-        var step = STEPS[st.answers.length];
-        var box = el('div', { class: 'opts' + (step.kind === 'start' ? ' opts--start' : '') });
+      var n = st.answers.length;
+      if (!done() && n === 7 && bookedElsewhere()) {
+        var b = getBooked(), bm = MESSENGERS[b.messenger] || MESSENGERS.telegram;
+        input.appendChild(el('div', { class: 'confirm' }, [
+          el('p', { class: 'confirm__booked' }, ['Вы уже записаны на ', el('b', { text: b.label }), ' – подтверждение ждёт в ' + bm.name + '.']),
+          el('div', { class: 'confirm__row' }, [
+            el('a', { class: 'btn btn--accent', href: bm.link(leadId), target: '_blank', rel: 'noopener' }, [icon(b.messenger === 'max' ? 'i-bubble' : 'i-plane'), 'Открыть ' + bm.name]),
+            el('a', { class: 'btn btn--line', href: '#call', onclick: function () { safe(function () { document.dispatchEvent(new CustomEvent('booking:again')); }); } }, ['Перенести на другое время'])
+          ])
+        ]));
+      } else if (!done()) {
+        var step = STEPS[n];
+        var box = el('div', { class: 'opts' });
         step.opts().forEach(function (o, i) {
           var b;
-          if (step.kind === 'start') {
-            b = el('button', { class: 'opt opt--card', type: 'button', style: '--d:' + (i * 70) + 'ms', onclick: function () { answer(o.k, o.l); } }, [
-              el('span', { class: 'opt__icon' }, [icon(o.i)]),
-              el('b', { text: o.l }),
-              el('small', { text: o.t })
-            ]);
-          } else if (step.kind === 'day') {
+          if (step.kind === 'day') {
             b = el('button', { class: 'opt opt--day', type: 'button', 'aria-label': o.l, onclick: function () { answer(o.k, o.l); } }, [el('span', { text: o.d.wd }), el('small', { text: o.d.date })]);
             if (i === 0 && st.dayPage > 0) box.appendChild(el('button', { class: 'opt opt--more', type: 'button', text: '← Раньше', onclick: function () { st.dayPage--; renderInput(); } }));
           } else {
-            b = el('button', { class: 'opt', type: 'button', text: o.l, onclick: function () { answer(o.k, o.l); } });
+            b = el('button', { class: 'opt', type: 'button', style: step.kind === 'start' ? '--d:' + (i * 60) + 'ms' : null, text: o.l, onclick: function () { answer(o.k, o.l); } });
+            if (step.kind === 'start') b.classList.add('opt--rise');
           }
           box.appendChild(b);
         });
+        if (step.kind === 'start') box.appendChild(el('button', { class: 'opt opt--rise opt--soft', type: 'button', style: '--d:240ms', text: 'Сначала – кто вы?', onclick: function () { answer('who', 'Сначала – кто вы?'); } }));
         if (step.kind === 'day' && (st.dayPage + 1) * PAGE < DAYS.length) box.appendChild(el('button', { class: 'opt opt--more', type: 'button', text: 'Позже →', onclick: function () { st.dayPage++; renderInput(); } }));
-        input.appendChild(el('p', { class: 'opts__hint', text: step.kind === 'start' ? 'Нажмите на вариант, чтобы ответить' : (step.kind === 'day' ? 'Нажмите на удобный день' : 'Нажмите на подходящий ответ') }));
+        var pf = forecast();
+        if (isMobile() && pf.cpc && !pf.cpl) input.appendChild(el('p', { class: 'chat__peek' }, ['Цена клика в нише: ', el('b', { text: pf.cpc }), ' · цена заявки – после вопроса о бюджете']));
+        input.appendChild(el('p', { class: 'opts__hint', text: step.kind === 'day' ? 'Выберите день' : (n === 8 ? 'Выберите время' : 'Выберите ответ') }));
         input.appendChild(box);
-        if (step.kind === 'start') tools.appendChild(el('button', { class: 'textbtn', type: 'button', text: 'Сначала – кто вы?', onclick: function () { answer('who', 'Сначала – кто вы?'); } }));
-        if (st.answers.length === 8) tools.appendChild(el('button', { class: 'textbtn', type: 'button', text: '← Другой день', onclick: function () { back(1); } }));
+        if (n === 8) tools.appendChild(el('button', { class: 'textbtn', type: 'button', text: '← Другой день', onclick: function () { back(1); } }));
+        else if (n > 0) tools.appendChild(el('button', { class: 'textbtn', type: 'button', text: '← Назад', onclick: function () { back(1); } }));
       } else if (!st.confirmed) {
         var err = el('p', { class: 'form-error', hidden: true });
         var agree = el('input', { type: 'checkbox', id: 'q-consent', onchange: function () { st.consent = agree.checked; if (agree.checked) err.hidden = true; } });
@@ -365,25 +401,26 @@
           el('div', { class: 'confirm__row' }, [messengerButton('telegram', true, err, agree), messengerButton('max', false, err, agree)]),
           el('p', { class: 'confirm__hint', text: 'Бот пришлёт подтверждение и напомнит накануне, за час и за 15 минут. Звонить не буду.' })
         ]));
-        tools.appendChild(el('button', { class: 'textbtn', type: 'button', text: 'Выбрать другое время', onclick: function () { back(2); } }));
+        tools.appendChild(el('button', { class: 'textbtn', type: 'button', text: 'Перенести на другое время', onclick: function () { back(2); } }));
       } else {
         var m = MESSENGERS[st.confirmed], other = st.confirmed === 'telegram' ? 'max' : 'telegram';
         input.appendChild(el('div', { class: 'confirm__row' }, [
           el('a', { class: 'btn btn--accent', href: m.link(leadId), target: '_blank', rel: 'noopener' }, [icon(st.confirmed === 'telegram' ? 'i-plane' : 'i-bubble'), 'Открыть ' + m.name + ' ещё раз']),
           el('a', { class: 'btn btn--line', href: MESSENGERS[other].link(leadId), target: '_blank', rel: 'noopener',
-            onclick: function () { sendLead({ type: 'quiz_booking', messenger: other, consent: true, slot: slot(), quiz: summary() }); st.confirmed = other; save(); setTimeout(update, 50); } },
+            onclick: function () { sendLead({ type: 'quiz_booking', messenger: other, consent: true, slot: slot(), quiz: summary() }); st.confirmed = other; save(); setBooked({ source: 'quiz', messenger: other, label: slot().label, date: slot().date, time: slot().time }); setTimeout(update, 50); } },
             [icon(other === 'telegram' ? 'i-plane' : 'i-bubble'), 'Лучше в ' + MESSENGERS[other].name])
         ]));
-        tools.appendChild(el('button', { class: 'textbtn', type: 'button', text: 'Выбрать другое время', onclick: function () { st.confirmed = null; back(2); } }));
+        tools.appendChild(el('button', { class: 'textbtn', type: 'button', text: 'Перенести на другое время', onclick: function () { st.confirmed = null; setBooked(null); back(2); } }));
       }
-      if (st.answers.length) tools.appendChild(el('button', { class: 'textbtn', type: 'button', text: 'Пройти заново', onclick: restart }));
+      if (st.answers.length) tools.appendChild(el('button', { class: 'textbtn textbtn--quiet', type: 'button', text: 'Начать заново', onclick: function () { if (safe(function () { return confirm('Начать заново? Ответы сотрутся.'); }, true)) restart(); } }));
       if (tools.childNodes.length) input.appendChild(tools);
     }
 
     function answer(k, l) {
       if (st.typing || done()) return;
       st.answers.push({ k: k, l: l });
-      st.typing = true;
+      autofill();
+      st.typing = true; st.acted = true;
       var n = st.answers.length;
       if (n === 1) goal('quiz_start');
       if (n === 4) goal('quiz_step3');
@@ -393,9 +430,22 @@
       clearTimeout(timer);
       timer = setTimeout(function () { st.typing = false; update(); }, 700);
     }
-    function back(n) { clearTimeout(timer); st.typing = false; st.dayPage = 0; st.answers = st.answers.slice(0, Math.max(0, st.answers.length - n)); save(); update(); }
-    function restart() { clearTimeout(timer); st.answers = []; st.typing = false; st.confirmed = null; save(); update(); }
+    function autofill() {
+      while (!done()) { var nx = STEPS[st.answers.length], au = nx.auto && nx.auto(amap()); if (!au) break; st.answers.push({ k: au.k, l: au.l, auto: true }); }
+    }
+    /* Шаг назад пропускает ответы, которые квиз подставил сам */
+    function back(n) {
+      clearTimeout(timer); st.typing = false; st.dayPage = 0;
+      for (var i = 0; i < n && st.answers.length; i++) {
+        while (st.answers.length && st.answers[st.answers.length - 1].auto) st.answers.pop();
+        st.answers.pop();
+        while (st.answers.length && st.answers[st.answers.length - 1].auto) st.answers.pop();
+      }
+      save(); update();
+    }
+    function restart() { clearTimeout(timer); st.answers = []; st.typing = false; st.confirmed = null; st.showAll = false; save(); if (getBooked() && getBooked().source === 'quiz') setBooked(null); update(); }
     function preset(list) { clearTimeout(timer); st.answers = list; st.typing = false; st.confirmed = null; save(); update(); }
+    function changeBudget() { if (st.confirmed || st.answers.length < 7) return; clearTimeout(timer); st.typing = false; st.dayPage = 0; st.answers = st.answers.slice(0, 6); save(); update(); goal('quiz_budget_change'); }
 
     /* ----- Прогноз ----- */
     function forecast() {
@@ -426,9 +476,10 @@
         out.cpl = fmt(rnd(budget / hi, 50)) + '–' + fmt(rnd(budget / lo, 50)) + ' ₽';
         if (c) {
           var mid = budget / leads;
-          if (mid <= c.max) out.verdict = { color: 'var(--ok)', text: 'Укладывается в допустимую цену заявки – реклама окупится.' };
-          else if (mid <= c.max * 1.4) out.verdict = { color: 'var(--warn)', text: 'На грани окупаемости – начнём с самых горячих запросов на поиске.' };
-          else out.verdict = { color: 'var(--bad)', text: 'Дороже допустимого – нужен другой подход. Разберём на онлайн-разборе.' };
+          var lim = 'Допустимая цена заявки для вас – ' + c.allowed + ', прогноз – ' + out.cpl + '. ';
+          if (mid <= c.max) out.verdict = { level: 'ok', text: lim + 'Укладывается – реклама окупится.', short: 'Это укладывается в допустимую цену заявки.' };
+          else if (mid <= c.max * 1.4) out.verdict = { level: 'warn', text: lim + 'На грани окупаемости – начнём с самых горячих запросов на поиске.', short: 'Это на грани окупаемости – начнём с самых горячих запросов.' };
+          else out.verdict = { level: 'bad', text: lim + 'Дороже допустимого – нужен другой подход, разберём его на онлайн-разборе.', short: 'Это дороже, чем для вас допустимо, – на разборе покажу, как снизить цену.' };
         }
       }
       return out;
@@ -436,10 +487,20 @@
     function summary() {
       var f = forecast();
       return {
-        answers: st.answers.slice(1, QUESTIONS + 1).map(function (x, i) { return { q: STEPS[i + 1].q, a: x.l, key: x.k }; }),
+        answers: st.answers.slice(1, QUESTIONS + 1).map(function (x, i) { return { q: qOf(i + 1), a: x.l, key: x.k }; }),
         segment: (st.answers[0] && st.answers[0].k.indexOf('seg:') === 0) ? st.answers[0].k.slice(4) : '',
         forecast: { cpc: f.cpc, clicks: f.clicks, leads: f.leads, cpl: f.cpl, verdict: f.verdict && f.verdict.text }
       };
+    }
+    function progress() {
+      var total = 0, answered = 0;
+      for (var i = 1; i <= QUESTIONS; i++) {
+        var x = st.answers[i];
+        if (x && x.auto) continue;
+        total++;
+        if (x) answered++;
+      }
+      return { total: total, answered: answered, left: total - answered };
     }
     function renderPlan() {
       var f = forecast();
@@ -448,27 +509,48 @@
         node.removeAttribute('data-final');
         node.textContent = v || '–';
         node.classList.toggle('is-set', !!v);
-        /* Цифры прогноза «добегают» до нового значения */
-        if (v && v !== node._v && node.closest('.plan__metrics, .plan__mini')) countUp(node, 700);
+        if (v && v !== node._v) countUp(node, 700);
         node._v = v;
       });
+      var ctx = $('#plan-context');
+      if (ctx) {
+        var parts = [f.niche, f.region, f.cpc && 'клик ' + f.cpc].filter(Boolean);
+        ctx.hidden = !parts.length; ctx.textContent = parts.join(' · ');
+      }
+      var wait = $('#plan-wait'); if (wait) wait.hidden = !!f.cpl;
       var verdict = $('#plan-verdict');
       if (verdict) {
         verdict.hidden = !f.verdict;
-        if (f.verdict) { verdict.querySelector('i').style.background = f.verdict.color; verdict.querySelector('span').textContent = f.verdict.text; }
+        verdict.className = 'plan__verdict' + (f.verdict ? ' plan__verdict--' + f.verdict.level : '');
+        if (f.verdict) verdict.querySelector('span').textContent = f.verdict.text;
       }
-      var n = st.answers.length;
-      var p = $('#chat-progress');
-      if (p) p.textContent = n <= QUESTIONS ? 'Прогноз: ' + Math.max(0, n - 1) + ' из ' + QUESTIONS : (st.confirmed ? 'Запись подтверждается' : 'Запись на разбор');
+      var bb = $('#plan-budget'); if (bb) bb.disabled = !(st.answers.length >= 7 && !st.confirmed);
+      var n = st.answers.length, pr = progress();
+      var label = n === 0 ? 'Прогноз' : pr.left > 0 ? 'Осталось ' + pr.left + ' ' + plural(pr.left, 'вопрос', 'вопроса', 'вопросов') : (st.confirmed ? 'Запись подтверждается' : (done() ? 'Подтвердите запись' : 'Прогноз готов'));
+      var p = $('#chat-progress'); if (p) p.textContent = label;
+      var pl = $('#plan-left'); if (pl) pl.textContent = pr.left > 0 ? label.toLowerCase() : 'предварительный';
+      var bar = $('#chat-bar'); if (bar) bar.style.width = (n === 0 ? 0 : Math.round(pr.answered / Math.max(1, pr.total) * 100)) + '%';
       var status = $('#chat-status');
       if (status) status.textContent = st.typing ? 'печатает…' : 'на связи';
+      if (row) row.classList.toggle('is-ready', !!f.cpl);
+      var bf = $('#booking-forecast');
+      if (bf) { bf.hidden = !f.cpl; if (f.cpl) bf.textContent = 'Ваш прогноз из квиза: ' + f.leads + ' заявок в месяц по ' + f.cpl + '. На разборе покажу, как сделать дешевле.'; }
     }
 
     var row = log.closest('.quiz__row');
     function update() {
       if (row) row.classList.toggle('is-idle', st.answers.length === 0);
       renderLog(); renderInput(); renderPlan();
+      /* На телефоне после ответа докручиваем страницу, чтобы были видны новый вопрос и кнопки */
+      if (st.acted && !st.typing && isMobile()) safe(function () {
+        requestAnimationFrame(function () {
+          var r = input.getBoundingClientRect();
+          if (r.bottom > innerHeight - 8 || r.top < 0) window.scrollBy({ top: r.bottom - innerHeight + 16, behavior: 'smooth' });
+        });
+      });
     }
+    var bbtn = $('#plan-budget'); if (bbtn) bbtn.addEventListener('click', changeBudget);
+    document.addEventListener('booked', function () { update(); });
     update();
 
     return {
@@ -496,7 +578,12 @@
     });
   });
   $$('[data-quiz-start]').forEach(function (a) {
-    a.addEventListener('click', function (e) { if (!quiz) return; e.preventDefault(); quiz.start('go'); scrollToEl(quizSection); });
+    a.addEventListener('click', function (e) {
+      if (!quiz) return;
+      e.preventDefault(); quiz.start('go');
+      /* Ждём, пока появится медиаплан, и ставим квиз ровно в экран */
+      setTimeout(function () { var r = $('.quiz__row') || quizSection; window.scrollTo({ top: r.getBoundingClientRect().top + window.pageYOffset - 16, behavior: 'smooth' }); }, 60);
+    });
   });
 
   /* ===================== Кейсы ===================== */
@@ -531,19 +618,22 @@
         var bar = el('i'); bar.style.height = (Math.round(v / max * 112) + 6) + 'px';
         return el('div', {}, [el('b', { text: String(v) }), bar, el('small', { text: String(i + 1) })]);
       });
+      /* Порядок чтения: что получили → с чего начинали → что сделали → динамика */
       var card = el('article', { class: 'case', id: 'case-panel', role: 'tabpanel', 'aria-labelledby': 'tab-' + c.id, tabindex: '0' }, [
-        el('div', { class: 'case__main' }, [
-          el('h3', { text: c.title }),
-          el('div', {}, [el('p', { class: 'case__label', text: 'Было' }), el('p', { class: 'case__before', text: c.before })]),
-          el('div', {}, [el('p', { class: 'case__label', text: 'Что сделали' }),
-            el('ul', { class: 'case__did' }, c.did.map(function (d) { return el('li', {}, [el('span', {}, [icon('i-check')]), el('span', { text: d })]); }))]),
-        ]),
-        el('div', { class: 'case__side' }, [
-          el('div', { class: 'results' }, c.results.map(function (r) { return el('div', {}, [el('b', { text: r[0] }), el('span', { text: r[1] })]); })),
-          el('div', { class: 'chart' }, [
-            el('div', { class: 'chart__head' }, [el('b', { text: c.chart }), el('small', { text: 'по месяцам работы' })]),
-            el('div', { class: 'chart__bars', role: 'img', 'aria-label': c.chart + ' по месяцам: ' + c.bars.join(', ') }, bars),
-            el('p', { class: 'chart__note', text: 'Скриншот отчёта Метрики с замазанными данными клиента' })
+        el('h3', { text: c.title }),
+        el('div', { class: 'results' }, c.results.map(function (r) { return el('div', {}, [el('b', { text: r[0] }), el('span', { text: r[1] })]); })),
+        el('div', { class: 'case__body' }, [
+          el('div', { class: 'case__main' }, [
+            el('div', { class: 'case__block case__block--before' }, [el('p', { class: 'case__label', text: 'Было' }), el('p', { class: 'case__before', text: c.before })]),
+            el('div', { class: 'case__block case__block--did' }, [el('p', { class: 'case__label', text: 'Что сделали' }),
+              el('ul', { class: 'case__did' }, c.did.map(function (d) { return el('li', {}, [el('span', {}, [icon('i-check')]), el('span', { text: d })]); }))])
+          ]),
+          el('div', { class: 'case__side' }, [
+            el('div', { class: 'chart' }, [
+              el('div', { class: 'chart__head' }, [el('b', { text: c.chart }), el('small', { text: 'по месяцам работы' })]),
+              el('div', { class: 'chart__bars', role: 'img', 'aria-label': c.chart + ' по месяцам: ' + c.bars.join(', ') }, bars),
+              el('p', { class: 'chart__note', text: 'Скриншот отчёта Метрики с замазанными данными клиента' })
+            ])
           ])
         ])
       ]);
@@ -552,6 +642,15 @@
       $$('.results b', card).forEach(function (b) { b.setAttribute('data-count', ''); if (panels.classList.contains('is-in')) countUp(b); });
     }
     select(0, false);
+    /* Вкладки не влезают – у края мягкое затухание, видно, что дальше есть ещё */
+    function fade() {
+      var more = tabs.scrollWidth > tabs.clientWidth + 2;
+      tabs.classList.toggle('is-more-right', more && tabs.scrollLeft + tabs.clientWidth < tabs.scrollWidth - 4);
+      tabs.classList.toggle('is-more-left', more && tabs.scrollLeft > 4);
+    }
+    tabs.addEventListener('scroll', fade, { passive: true });
+    window.addEventListener('resize', fade);
+    fade();
   })();
 
   /* ===================== Запись на онлайн-разбор (блок внизу) ===================== */
@@ -574,14 +673,18 @@
       daysBox.textContent = ''; nav.textContent = '';
       DAYS.slice(page * PAGE, page * PAGE + PAGE).forEach(function (x) {
         daysBox.appendChild(el('button', { class: 'day', type: 'button', 'aria-pressed': sel.day && sel.day.iso === x.iso ? 'true' : 'false', 'aria-label': dayLabel(x),
-          onclick: function () { sel.day = x; sel.slot = null; view = 2; renderAll(); paint(true); } }, [el('span', { text: x.wd }), el('b', { text: x.date })]));
+          onclick: function () { sel.day = x; sel.slot = null; view = 2; renderAll(); paint(true); if (isMobile()) safe(function () { slotsHead.scrollIntoView({ behavior: 'smooth', block: 'center' }); }); } }, [el('span', { text: x.wd }), el('b', { text: x.date })]));
       });
       if (page > 0) nav.appendChild(el('button', { class: 'textbtn', type: 'button', text: '← Раньше', onclick: function () { page--; renderDays(); } }));
       if ((page + 1) * PAGE < DAYS.length) nav.appendChild(el('button', { class: 'textbtn days-nav__next', type: 'button', text: 'Другие даты →', onclick: function () { page++; renderDays(); } }));
     }
+    var slotsHead = el('div', { class: 'slots__head' });
+    slotsBox.parentNode.insertBefore(slotsHead, slotsBox);
     function renderSlots() {
-      slotsBox.textContent = '';
+      slotsBox.textContent = ''; slotsHead.textContent = '';
       if (!sel.day) return;
+      slotsHead.appendChild(el('p', {}, [el('b', { text: dayLabel(sel.day) }), ' – выберите время']));
+      slotsHead.appendChild(el('button', { class: 'textbtn', type: 'button', text: '← другой день', onclick: function () { view = 1; paint(true); } }));
       sel.day.slots.forEach(function (t) {
         slotsBox.appendChild(el('button', { class: 'slot', type: 'button', 'aria-pressed': t === sel.slot ? 'true' : 'false', text: t,
           onclick: function () { sel.slot = t; view = 3; renderSlots(); paint(true); } }));
@@ -648,31 +751,87 @@
           quiz: quiz && quiz.hasAnswers() ? quiz.summary() : null
         });
         goal('booking_confirm', { messenger: key, source: 'form' });
-        $('#booking-when').textContent = when() + ' (МСК)';
-        $('#booking-messenger').textContent = MESSENGERS[key].name;
-        reopen.href = MESSENGERS[key].link(leadId);
-        reopen.textContent = 'Открыть ' + MESSENGERS[key].name + ' ещё раз';
-        setTimeout(function () { form.hidden = true; doneBox.hidden = false; doneBox.focus(); }, 50);
+        setBooked({ source: 'form', messenger: key, label: when(), date: sel.day.iso, time: sel.slot });
+        setTimeout(function () { showDone(getBooked()); doneBox.focus(); }, 50);
       });
     });
-    $('#booking-again').addEventListener('click', function () { form.hidden = false; doneBox.hidden = true; sel.slot = null; view = 2; renderSlots(); paint(true); });
+    var switchBtn = $('#booking-switch');
+    function showDone(b) {
+      if (!b) return;
+      var other = b.messenger === 'telegram' ? 'max' : 'telegram';
+      $('#booking-when').textContent = b.label + ' (МСК)';
+      $('#booking-messenger').textContent = MESSENGERS[b.messenger].name;
+      reopen.href = MESSENGERS[b.messenger].link(leadId);
+      reopen.textContent = 'Открыть ' + MESSENGERS[b.messenger].name + ' ещё раз';
+      if (switchBtn) { switchBtn.href = MESSENGERS[other].link(leadId); switchBtn.textContent = 'Лучше в ' + MESSENGERS[other].name; }
+      form.hidden = true; doneBox.hidden = false;
+    }
+    if (switchBtn) switchBtn.addEventListener('click', function () {
+      var b = getBooked(); if (!b) return;
+      var other = b.messenger === 'telegram' ? 'max' : 'telegram';
+      sendLead({ type: b.source === 'quiz' ? 'quiz_booking' : 'booking', messenger: other, consent: true, site: site.value.trim(),
+        slot: { date: b.date, time: b.time, label: b.label, tz: 'Europe/Moscow' }, quiz: quiz && quiz.hasAnswers() ? quiz.summary() : null });
+      b.messenger = other; setBooked(b);
+    });
+    function again() { setBooked(null); form.hidden = false; doneBox.hidden = true; sel.slot = null; view = sel.day ? 2 : 1; renderSlots(); paint(true); }
+    $('#booking-again').addEventListener('click', again);
+    document.addEventListener('booking:again', again);
+    /* Записался в квизе – здесь показываем ту же запись */
+    function syncBooked() { var b = getBooked(); if (b) showDone(b); else if (!doneBox.hidden) { form.hidden = false; doneBox.hidden = true; } }
+    document.addEventListener('booked', syncBooked);
+    syncBooked();
   })();
 
-  /* ===================== Видео ===================== */
+  /* ===================== Видео: играет прямо в карточке ===================== */
   (function () {
-    var btn = $('#video-open'), dlg = $('#video-dialog'), body = $('#video-body'), close = $('#video-close');
-    if (!btn || !dlg || typeof dlg.showModal !== 'function') return;
+    var card = $('#video-card'), btn = $('#video-open');
+    if (!card || !btn || !CFG.videoUrl) return;
+    var video = null;
+    function make(preload) {
+      if (video) return video;
+      video = el('video', { src: CFG.videoUrl, playsinline: true, preload: preload, controls: true, class: 'video-card__video', poster: (card.querySelector('img') || {}).src || null });
+      video.volume = 0.7;
+      card.appendChild(video);
+      return video;
+    }
+    /* Подгружаем заранее, когда блок близко: на компьютере – целиком, на телефоне – только начало */
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (en) {
+        if (!en[0].isIntersecting) return;
+        io.disconnect();
+        make(safe(function () { return matchMedia('(hover: hover)').matches; }, false) ? 'auto' : 'metadata');
+      }, { rootMargin: '300px 0px' });
+      io.observe(card);
+    }
     btn.addEventListener('click', function () {
-      body.textContent = '';
-      if (CFG.videoUrl) body.appendChild(el('video', { src: CFG.videoUrl, controls: true, autoplay: true, playsinline: true }));
-      else body.appendChild(el('p', { text: 'Видео скоро появится. А пока можно записаться на онлайн-разбор – расскажу всё лично.' }));
-      dlg.showModal();
+      var v = make('auto');
+      card.classList.add('is-playing');
+      safe(function () { var p = v.play(); if (p && p.catch) p.catch(function () {}); });
       goal('video_open');
     });
-    function shut() { var v = body.querySelector('video'); if (v) v.pause(); dlg.close(); }
-    close.addEventListener('click', shut);
-    dlg.addEventListener('click', function (e) { if (e.target === dlg) shut(); });
-    dlg.addEventListener('close', function () { var v = body.querySelector('video'); if (v) v.pause(); });
+  })();
+  /* Фото команды грузим заранее, когда до блока ~800 px: в горизонтальной ленте отложенная загрузка срабатывает на ходу */
+  (function () {
+    var track = $('#crew-track');
+    if (!track || !('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (en) {
+      if (!en[0].isIntersecting) return;
+      io.disconnect();
+      $$('img[data-crew-img]', track).forEach(function (img) { img.loading = 'eager'; img.decoding = 'async'; });
+    }, { rootMargin: '800px 0px' });
+    io.observe(track);
+  })();
+  /* Плавающая кнопка на телефоне: видна, когда первый экран ушёл, а квиза и записи на экране нет */
+  (function () {
+    var fc = $('#float-cta'), hero = $('#top');
+    if (!fc || !hero || !('IntersectionObserver' in window)) return;
+    var vis = {};
+    var io = new IntersectionObserver(function (en) {
+      en.forEach(function (e) { vis[e.target.id] = e.isIntersecting; });
+      var cookieOpen = cookieBar && !cookieBar.hidden;
+      fc.hidden = !isMobile() || vis.top || vis.quiz || vis.call || cookieOpen;
+    }, { threshold: 0 });
+    ['top', 'quiz', 'call'].forEach(function (id) { var n = document.getElementById(id); if (n) io.observe(n); });
   })();
   /* ===================== Команда: слайдер ===================== */
   (function () {
