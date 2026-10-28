@@ -1,0 +1,139 @@
+.site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+    width: 100%;
+    max-width: 1440px;
+    font-family: Gilroy, system-ui, sans-serif;
+}
+
+.site-header__brand,
+.site-header__messengers,
+.site-header__socials,
+.site-header__phone {
+    display: flex;
+    align-items: center;
+}
+
+.site-header__brand {
+    gap: 10px;
+    color: #2f4565;
+}
+
+.site-header__logo {
+    width: 53px;
+    height: 53px;
+    flex: 0 0 auto;
+}
+
+.site-header__brand-text {
+    display: grid;
+    font-size: 20px;
+    line-height: 1.12;
+}
+
+.site-header__brand-text span {
+    font-weight: 500;
+}
+
+.site-header__brand-text strong {
+    font-weight: 700;
+}
+
+.site-header__messengers {
+    gap: 15px;
+    color: #2f4565;
+}
+
+.site-header__messenger-text {
+    display: grid;
+    gap: 4px;
+    text-align: center;
+}
+
+.site-header__messenger-text strong {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.site-header__messenger-text span {
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.site-header__socials {
+    gap: 5px;
+}
+
+.site-header__social {
+    display: block;
+    width: 40px;
+    height: 40px;
+}
+
+.site-header__social img {
+    width: 100%;
+    height: 100%;
+}
+
+.site-header__phone {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    color: #2f4565;
+}
+
+.site-header__phone-link {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.1;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.site-header__schedule {
+    font-size: 13px;
+    font-weight: 400;
+    white-space: nowrap;
+}
+
+.site-header__callback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    padding: 0 20px;
+    border-radius: 15px;
+    background-color: #5bb665;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+@media (max-width: 960px) {
+
+    .site-header__brand,
+    .site-header__messengers {
+        margin-right: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .site-header {
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+    }
+
+    .site-header__callback, .site-header__brand, .site-header__messenger-text, .site-header__schedule{
+        display: none;
+    }
+
+
+    .site-header__phone {
+        align-items: center;
+    }
+}

@@ -1,0 +1,198 @@
+.services-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    width: 100%;
+    max-width: 1440px;
+    padding: 0 20px;
+    font-family: Gilroy, system-ui, sans-serif;
+}
+
+.services-section__title {
+    width: 100%;
+    max-width: 1125px;
+    margin: 0;
+    color: #484848;
+    font-size: 45px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.services-section__title span {
+    color: #25ae34;
+    font-weight: 700;
+}
+
+.services-section__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 32px;
+    width: 100%;
+}
+
+.service-card {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 384px;
+    overflow: hidden;
+    border-radius: 16px;
+    background-position: center;
+    background-size: cover;
+}
+
+.service-card--repair {
+    background-image:
+        linear-gradient(180deg, rgb(17 24 39 / 0%) 30%, rgb(17 24 39 / 78%) 100%),
+        url("../img/Frame 1410099708.webp");
+}
+
+.service-card--install {
+    background-image:
+        linear-gradient(180deg, rgb(17 24 39 / 0%) 30%, rgb(17 24 39 / 78%) 100%),
+        url("../img/Frame 1410099709.webp");
+}
+
+.service-card--turnkey {
+    background-image:
+        linear-gradient(180deg, rgb(17 24 39 / 0%) 30%, rgb(17 24 39 / 78%) 100%),
+        url("../img/Frame 1410099710.webp");
+}
+
+.service-card--extension-living {
+    background-image:
+        linear-gradient(180deg, rgb(17 24 39 / 0%) 30%, rgb(17 24 39 / 78%) 100%),
+        url("../img/extensions/service-living-extension.webp");
+    background-position: center;
+}
+
+.service-card--extension-terrace {
+    background-image:
+        linear-gradient(180deg, rgb(17 24 39 / 0%) 30%, rgb(17 24 39 / 78%) 100%),
+        url("../img/extensions/service-veranda-terrace.webp");
+    background-position: center;
+}
+
+.service-card--extension-frame {
+    background-image:
+        linear-gradient(180deg, rgb(17 24 39 / 0%) 30%, rgb(17 24 39 / 78%) 100%),
+        url("../img/extensions/service-frame-extension.webp");
+    background-position: center;
+}
+
+.service-card--extension-block {
+    background-image:
+        linear-gradient(180deg, rgb(17 24 39 / 0%) 30%, rgb(17 24 39 / 78%) 100%),
+        url("../img/extensions/service-block-extension.webp");
+    background-position: center;
+}
+
+.service-card--extension-garage {
+    background-image:
+        linear-gradient(180deg, rgb(17 24 39 / 0%) 30%, rgb(17 24 39 / 78%) 100%),
+        url("../img/extensions/service-garage-utility.webp");
+    background-position: center;
+}
+
+.service-card--extension-floor {
+    background-image:
+        linear-gradient(180deg, rgb(17 24 39 / 0%) 30%, rgb(17 24 39 / 78%) 100%),
+        url("../img/extensions/service-floor-mansard.webp");
+    background-position: center;
+}
+
+.service-card__content {
+    width: 100%;
+    padding: 0 20px 22px;
+}
+
+.service-card__title {
+    margin: 0;
+    color: #fff;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.service-card__text {
+    margin: 2px 0 0;
+    color: #cbd5e1;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.6;
+}
+
+.services-section__link-card {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 22px 26px;
+    border-radius: 16px;
+    background: #f1f7f2;
+    color: #2f4565;
+}
+
+.services-section__link-card p {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.services-section__link-card a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 20px;
+    border-radius: 12px;
+    color: #fff;
+    background: #25ae34;
+    font-size: 15px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+@media (max-width: 980px) {
+    .services-section__grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .service-card {
+        min-height: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    .services-section {
+        gap: 28px;
+    }
+
+    .services-section__title {
+        font-size: 34px;
+    }
+
+    .services-section__link-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (max-width: 520px) {
+    .services-section {
+        padding: 0 12px;
+    }
+
+    .services-section__title {
+        font-size: 28px;
+    }
+
+    .service-card {
+        min-height: 260px;
+    }
+}

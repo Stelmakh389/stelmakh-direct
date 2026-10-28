@@ -1,0 +1,144 @@
+@font-face {
+    font-family: Gilroy;
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: url("../fonts/Gilroy-Light.woff2") format("woff2");
+}
+@font-face {
+    font-family: Gilroy;
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("../fonts/Gilroy-Regular.woff2") format("woff2");
+}
+@font-face {
+    font-family: Gilroy;
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("../fonts/Gilroy-Medium.woff2") format("woff2");
+}
+@font-face {
+    font-family: Gilroy;
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url("../fonts/Gilroy-Semibold.woff2") format("woff2");
+}
+@font-face {
+    font-family: Gilroy;
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("../fonts/Gilroy-Bold.woff2") format("woff2");
+}
+@font-face {
+    font-family: Gilroy;
+    font-style: normal;
+    font-weight: 900;
+    font-display: swap;
+    src: url("../fonts/Gilroy-Black.woff2") format("woff2");
+}
+
+*,
+:before,
+:after {
+    box-sizing: border-box;
+}
+body {
+    -webkit-font-smoothing: antialiased;
+    font-family: Gilroy, system-ui, sans-serif;
+}
+button {
+    -webkit-font-smoothing: inherit;
+    -moz-osx-font-smoothing: inherit;
+    -webkit-appearance: none;
+}
+* {
+    margin: 0;
+    padding: 0;
+}
+a {
+    color: inherit;
+    -webkit-text-decoration: inherit;
+    text-decoration: inherit;
+}
+button {
+    font: inherit;
+    color: inherit;
+    background: 0 0;
+    border-style: none;
+    width: auto;
+    line-height: normal;
+    overflow: visible;
+}
+img,
+picture,
+video,
+canvas,
+svg {
+    display: block;
+}
+.text {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+body * {
+    scrollbar-width: none;
+}
+body ::-webkit-scrollbar {
+    display: none;
+}
+
+body {
+    --opacity-100: 100;
+    --item-spacing-m: 32;
+    --color-azure-11: #0f172a;
+    --color-azure-11-50-: #0f172a80;
+    --color-azure-11-0-: #0f172a00;
+    --color-white-solid: #fff;
+    --line-height-36: 36;
+    --color-azure-17: #1e293b;
+    --item-spacing-s-: 24;
+    --item-spacing-xs: 8;
+    --item-spacing-12: 12;
+    --line-height-20: 20;
+    --color-azure-47: #64748b;
+    --line-height-28: 28;
+    --color-grey-6: #101010;
+    --line-height-22: 22;
+    --font-size-14: 14;
+    --color-grey-16: #282828;
+    --font-size-25: 25;
+    --color-yellow-54: #fac917;
+}
+
+.capsized-Gilroy-Bold-0:before {
+    content: "";
+    margin-bottom: -0.19em;
+    display: table;
+}
+.capsized-Gilroy-Bold-0:after {
+    content: "";
+    margin-top: -0.35em;
+    display: table;
+}
+#_ {
+    background-color: #fff;
+    min-height: 100vh;
+    display: grid;
+}
+#Frame_1410099691 {
+    background-color: #fff;
+    border-radius: 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    row-gap: 120px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+}
