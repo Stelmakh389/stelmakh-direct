@@ -1,0 +1,292 @@
+/* Стили для попапа формы обратной связи */
+.popup__bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.5s all;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.popup__bg.active {
+    opacity: 1;
+    pointer-events: all;
+    transition: 0.5s all;
+}
+
+.popup {
+    position: relative;
+    background: #fff;
+    width: 400px;
+    max-width: 90%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    padding: 40px;
+    border-radius: 12px;
+    transform: scale(0);
+    transition: 0.5s all;
+}
+
+.popup.active {
+    transform: scale(1);
+    transition: 0.5s all;
+}
+
+.close-popup.popup-popup {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #f5f5f5;
+    transition: background-color 0.3s ease;
+}
+
+.close-popup.popup-popup:hover {
+    background: #e0e0e0;
+}
+
+.close-popup.popup-popup svg {
+    width: 18px;
+    height: 18px;
+}
+.popup__title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-align: center;
+    color: #333;
+}
+
+.popup__subtitle {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.popup__form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.popup__input-wrapper {
+    position: relative;
+}
+
+.popup__input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+.popup__input:focus {
+    outline: none;
+    border-color: #559d11;
+}
+
+.popup__input::placeholder {
+    color: #999;
+}
+
+.popup__checkbox-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.popup__checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.popup__checkbox {
+    display: none;
+}
+
+.popup__checkbox-custom {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e0e0e0;
+    border-radius: 4px;
+    position: relative;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+    margin-top: 2px;
+}
+
+.popup__checkbox:checked + .popup__checkbox-custom {
+    background-color: #559d11;
+    border-color: #559d11;
+}
+
+.popup__checkbox:checked + .popup__checkbox-custom::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.popup__checkbox-text {
+    color: #666;
+}
+
+.popup__checkbox-text a {
+    color: #559d11;
+    text-decoration: none;
+}
+
+.popup__checkbox-text a:hover {
+    text-decoration: underline;
+}
+
+.popup__submit {
+    width: 100%;
+    padding: 14px 24px;
+    background-color: #ccc;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: not-allowed;
+    transition: all 0.3s ease;
+    disabled: true;
+}
+
+.popup__submit.btn--active {
+    background-color: #559d11;
+    cursor: pointer;
+    disabled: false;
+}
+
+.popup__submit.btn--active:hover {
+    background-color: #4a8a0e;
+}
+
+/* Стили для основной формы */
+.contact__input {
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+.contact__input:focus {
+    outline: none;
+    border-color: #559d11;
+}
+
+.contact__btn {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transition: all 0.3s ease;
+}
+
+.contact__btn.btn--active {
+    background-color: #559d11;
+    cursor: pointer;
+}
+
+.contact__btn.btn--active:hover {
+    background-color: #4a8a0e;
+}
+
+/* Стили для уведомления об успехе */
+.success-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 16px 20px;
+    z-index: 1000;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.3s ease;
+    max-width: 400px;
+}
+
+.success-notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.success-notification__content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.success-notification__content svg {
+    flex-shrink: 0;
+}
+
+.success-notification__content span {
+    color: #333;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .popup {
+        width: 90%;
+        max-width: 400px;
+        padding: 30px 20px;
+    }
+    
+    .popup__title {
+        font-size: 20px;
+    }
+    
+    .success-notification {
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .popup {
+        padding: 20px 15px;
+    }
+    
+    .popup__title {
+        font-size: 18px;
+    }
+    
+    .popup__input {
+        font-size: 16px; /* Предотвращает зум на iOS */
+    }
+} 

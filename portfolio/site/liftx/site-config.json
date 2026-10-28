@@ -1,0 +1,51 @@
+{
+    "phoneMasked": "+7 (495) ***-**-**",
+    "email": "get@podemnik-v-arendu.ru",
+    "pages": [
+        {
+            "url": "/avtovyshki/",
+            "title": "Подберём автовышку за 20 секунд",
+            "type": "aerial"
+        },
+        {
+            "url": "/dlinnomery/",
+            "title": "Подберём длиномер за 20 секунд",
+            "type": "longbed"
+        },
+        {
+            "url": "/ekskavatory-pogruzchiki/",
+            "title": "Подберём экскаватор-погрузчик за 20 секунд",
+            "type": "backhoe"
+        },
+        {
+            "url": "/ekskavatory/",
+            "title": "Подберём экскаватор за 20 секунд",
+            "type": "excavator"
+        },
+        {
+            "url": "/kolenchatye-podemniki/",
+            "title": "Подберём коленчатый подъемник за 20 секунд",
+            "type": "boom"
+        },
+        {
+            "url": "/krany/",
+            "title": "Подберём кран за 20 секунд",
+            "type": "crane"
+        },
+        {
+            "url": "/manipulyatory/",
+            "title": "Подберём манипулятор за 20 секунд",
+            "type": "manipulator"
+        },
+        {
+            "url": "/nozhnichnye-podemniki/",
+            "title": "Подберём ножничный подъемник за 20 секунд",
+            "type": "scissor"
+        },
+        {
+            "url": "/shalandy/",
+            "title": "Подберём шаланду и длинномер за 20 секунд",
+            "type": "shalanda"
+        }
+    ]
+}

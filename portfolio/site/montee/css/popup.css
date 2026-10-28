@@ -1,0 +1,400 @@
+/* Важная часть */
+.popup__bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
+  opacity: 0; 
+  pointer-events: none; 
+  transition: 0.5s all;
+  z-index: 200;
+}
+.popup__bg .wpcf7-form {
+  background-color: white;
+  border: none;
+  display: block;
+  max-width: 450px;
+  width: 100%;
+  gap: 15px;
+}
+.popup__bg .wpcf7-form .contact__input {
+  max-width: none;
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #559d11;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+.popup__bg .wpcf7-form .btn {
+  width: 100%;
+}
+.popup__bg__quiz {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
+  opacity: 0; 
+  pointer-events: none; 
+  transition: 0.5s all;
+}
+.submit{
+  margin-bottom:20px;
+  width: 250px;
+  height: 50px;
+  cursor:pointer;
+  border: 1px solid #5864FF;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.submit label{
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  justify-content: center;
+}
+.submit:hover{
+  background:#5864FF;
+  color:white;
+}
+.close-popup.popup-quiz{
+  z-index: 1;
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  cursor: pointer;
+  /* color: white; */
+  width: 36px;
+}
+.popup [type="checkbox"]{
+  height:15px;
+  width:15px;
+}
+.check_privacy{
+  display:flex;
+  margin-top:20px;
+}
+.check_privacy p{
+  font-size:12px;
+  padding-left:10px;
+  margin:0;
+}
+.popup__bg__quiz.active{
+  opacity: 1; 
+  pointer-events: all;
+  transition: 0.5s all;
+}
+.popup__bg.active { 
+  opacity: 1; 
+  pointer-events: all;
+  transition: 0.5s all;
+}
+
+.popup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0); 
+  background: #fff;
+  width: 400px;
+  display:flex;
+  align-items:center;
+  flex-direction:column;
+  padding: 40px;
+  transition: 0.5s all;
+  border-radius:10px;
+}
+
+.quiz {
+  position:fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0); 
+  background: #fff;
+  width: 900px;
+  height: 500px;
+  display:flex;
+  align-items:flex-start;
+  flex-direction:column;
+  padding: 40px;
+  transition: 0.5s all;
+  border-radius:10px;
+}
+.zag_quiz{
+  font-size:30px;
+  font-weight:700;
+}
+
+.quiz input[type=radio] {
+display: none;
+}
+
+.quiz .separ {
+  position: absolute;
+  right: 0px;
+  top: 15px;
+  height: 565px;
+  width: 291px;
+  background-size: cover;
+  border-style: none;
+  border-radius: 0 0 10px 0;
+}
+.quiz [type="checkbox"] {
+  height: 15px;
+  width: 15px;
+}
+.progress-bar{
+  position: absolute;
+  top:0;
+  left: 0;
+  width: 100%;
+  background: #e9e9e9;
+  border-radius:10px 0 0 0;
+  height:15px;
+}
+.descr_quiz{
+  font-size: 16px;
+  max-width: 430px;
+  width: 100%;
+  margin-top: 0;
+}
+.step-one{
+  height:15px;
+  width:30%;
+  background:#5864FF;
+  transition:.5s;
+}
+
+.step-two{
+  height:15px;
+  width:60%;
+  background:#5864FF;
+  transition:.5s;
+}
+
+.step-three{
+  height:15px;
+  width:100%;
+  background:#5864FF;
+  transition:.5s;
+}
+.quiz_cont{
+  display:flex;
+  flex-direction:column;
+}
+.quiz.active { 
+  transform: translate(-50%, -50%) scale(1); 
+  transition: 0.5s all;
+}
+
+.quiz.active ul{
+  padding-left:0;
+  list-style:none;
+}
+
+.popup.active { 
+  transform: translate(-50%, -50%) scale(1); 
+  transition: 0.5s all;
+}
+/* Конец важной части */
+/* Далее код для стилизации формы */
+.close-popup.popup-popup {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+  width: 36px;
+}
+
+.popup label {
+  width: 100%;
+  margin-bottom: 25px;
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.popup .label__text {
+  font-size: 14px;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: #cfd0d3;
+  margin-bottom: 5px;
+}
+
+.popup input {
+  height: 45px;
+  width:192px;
+  font-size: 25px;
+  border: none;
+  outline: none;
+  border-bottom: 1px solid #cfd0d3;
+}
+
+.quiz input{
+  height: 45px;
+  width:300px;
+  font-size: 25px;
+  border: none;
+  outline: none;
+  border-bottom: 1px solid #cfd0d3;
+}
+
+.popup input:focus {
+  border-bottom: 1px solid #5864FF;
+}
+
+.popup input:focus + .label__text {
+  color: #2982ff;
+}
+
+.popup textarea {
+  resize: none;
+  width: 100%;
+  height: 150px;
+  border: none;
+  outline: none;
+  border-bottom: 1px solid #cfd0d3;
+  font-size: 18px;
+  padding-top: 5px;
+}
+
+.popup textarea:focus {
+  border-bottom: 1px solid #5864FF;
+}
+
+.popup textarea:focus + .label__text {
+  color: #2982ff;
+}
+
+/* .btn {
+  width: 100%!important;
+  height: 60px!important;
+  display:none;
+  pointer-events: none;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px!important;
+  border-radius: 10px;
+  border: none;
+  text-transform: uppercase;
+  transition: 0.5s all;
+  background: linear-gradient(88deg, #5864FF 0%, #A6ACFF 51%, #5864FF 100%);
+  margin-top:20px;
+} */
+
+.btn--active {
+pointer-events: auto;
+display:flex;
+cursor: pointer;
+}
+
+
+@media screen and (max-width:530px){
+  .popup{
+      width:310px;
+      padding: 20px;
+  }
+  .zag_form{
+      font-size:25px;
+  }
+  .check_privacy{
+      width: 222px;
+  }
+}
+
+.four_block{
+  display:none;
+  flex-direction:column;
+  justify-content:center;
+  top: 0;
+  bottom: 0;
+  position: absolute;
+}
+
+.four_block.active{
+  display:flex;
+}
+
+.quiz_cont{
+  display:none;
+}
+
+.quiz_cont.active{
+  display:flex;
+}
+
+@media screen and (max-width:1100px){
+  .quiz{
+      width:560px;
+      height:400px;
+      align-items:center;
+  }
+  .quiz_cont ul{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+  }
+  .separ{
+      display:none;
+  }
+}
+
+@media screen and (max-width:750px){
+  .quiz{
+      width:440px;
+      align-items:center;
+      justify-content:center;
+  }
+  .zag_quiz{
+      font-size:25px;
+  }
+  .close-popup.popup-quiz{
+      right:0;
+  }
+}
+
+@media screen and (max-width:650px){
+  .quiz{
+      width:300px;
+  }
+  .four_block{
+      width:80%;
+  }
+  .zag_quiz{
+      font-size:20px;
+      text-align:center;
+  }
+  .descr_quiz{
+      font-size:12px;
+      text-align:center;
+  }
+  .submit label{
+      font-size:14px
+  }
+
+@media screen and (max-width:650px){
+  .quiz{
+      padding:10px;
+  }
+  .quiz input{
+      width:250px;
+      font-size:20px;
+  }
+  .four_block{
+      width:80%;
+  }
+  .zag_quiz{
+      font-size:20px;
+      text-align:center;
+  }
+}

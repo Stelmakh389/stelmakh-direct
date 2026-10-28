@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Подбор спецтехники в аренду</title>
+    <base href="/portfolio/site/liftx/" />
+    <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="assets/css/styles.css?v=phone-swipe-1" />
+    <link rel="stylesheet" href="assets/css/phone-reveal.css?v=1" />
+  
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="stylesheet" href="/portfolio/site/liftx/assets/css/fonts.css">
+    <style>.demo-ribbon{position:relative;z-index:10000;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 14px;padding:8px 16px;background:#050915;color:#EEF2FF;font:500 13px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-align:center}.demo-ribbon b{color:#C6F25E;font-weight:600}.demo-ribbon a{color:#C6F25E;text-decoration:underline;text-underline-offset:2px}</style>
+  </head>
+  <body>
+<div class="demo-ribbon"><span><b>Демо-копия</b> сайта из портфолио Андрея Стельмаха. Заявки отсюда не отправляются.</span><a href="/portfolio/liftx/">Разбор проекта →</a></div>
+    <div class="page">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Подъемник Директ">
+          <img src="assets/img/logo.svg" alt="" aria-hidden="true" />
+          <span class="brand__text">
+            <b>Доставка по Москве и МО</b>
+            <strong>за 2 часа</strong>
+          </span>
+        </a>
+
+        <div class="address">
+          <span class="address__map" aria-hidden="true"></span>
+          <span>г. Москва, ул. Большая Никитская,<br />д. 35, офис 204</span>
+        </div>
+
+        <button class="phone phone-reveal-trigger" type="button" data-site-phone aria-haspopup="dialog"><span data-phone-label>+7 (495) ***-**-**</span><span class="phone-reveal-hint">Показать номер</span></button>
+      </header>
+
+      <main>
+        <section class="hero" aria-labelledby="hero-title">
+          <div class="hero__status">
+            <span aria-hidden="true"></span>
+            <b id="available-count">0 машин</b>
+            <span>свободно сегодня</span>
+          </div>
+          <div class="hero__content">
+            <h1 id="hero-title">Подберём подъемник <span>за 20 секунд</span></h1>
+            <p>
+              Укажите тип техники и параметры — сразу покажем подходящие машины с
+              ценой и наличием на сегодня. Привезём за 2 часа
+            </p>
+          </div>
+        </section>
+
+        <section class="catalog" aria-label="Каталог спецтехники">
+          <aside class="filters" aria-label="Фильтры">
+            <div class="filter-card">
+              <div id="dynamic-filters"></div>
+
+              <div class="filter-group filter-group--location">
+                <h2>Где работаете?</h2>
+                <div class="segmented" role="radiogroup" aria-label="Где работаете">
+                  <button class="is-active" type="button" data-filter="location" data-value="all">Не важно</button>
+                  <button type="button" data-filter="location" data-value="indoor">В помещении</button>
+                  <button type="button" data-filter="location" data-value="outdoor">На улице</button>
+                </div>
+              </div>
+
+              <div class="filter-group filter-group--engine">
+                <h2>Тип двигателя</h2>
+                <div class="segmented" role="radiogroup" aria-label="Тип двигателя">
+                  <button class="is-active" type="button" data-filter="engine" data-value="all">Не важно</button>
+                  <button type="button" data-filter="engine" data-value="diesel">Дизель</button>
+                  <button type="button" data-filter="engine" data-value="electric">Электро</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="benefit">
+              <span aria-hidden="true">✓</span>
+              <p><b>Скидки до 30%</b> на долгосрочную аренду</p>
+            </div>
+            <div class="benefit">
+              <span aria-hidden="true">✓</span>
+              <p>Более <b>150 ед. техники</b> в собственности, <b>не сдаем в субаренду!</b></p>
+            </div>
+            <div class="benefit">
+              <span aria-hidden="true">✓</span>
+              <p><b>Доставка за 2 часа</b> в любую точку Москвы и МО</p>
+            </div>
+          </aside>
+
+          <section class="results">
+            <div class="type-tabs" role="radiogroup" aria-label="Тип техники">
+              <button class="is-active" type="button" data-filter="type" data-value="all">Все</button>
+              <button type="button" data-filter="type" data-value="scissor">Ножничные</button>
+              <button type="button" data-filter="type" data-value="boom">Коленчатые</button>
+            </div>
+
+            <div class="result-summary" id="result-summary" aria-live="polite"></div>
+            <div class="cards" id="cards" aria-live="polite"></div>
+            <div class="load-more-wrap" id="load-more-wrap" hidden>
+              <button class="load-more-button" id="load-more" type="button">Показать еще</button>
+            </div>
+          </section>
+        </section>
+
+        <section class="proposal" aria-labelledby="proposal-title">
+          <div class="proposal__content">
+            <h2 id="proposal-title">Сделаем лучшее предложение для организаций</h2>
+            <p>Отправить запрос для заказа коммерческого предложения</p>
+            <button class="proposal__button" type="button" data-open-lead>Заказать технику</button>
+          </div>
+          <div class="proposal__media">
+            <img src="assets/img/commercial-offer.webp" alt="Коммерческое предложение по аренде спецтехники" loading="lazy" />
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="site-footer__company">
+          <b>ИП Губанов Петр Геннадьевич</b>
+          <span>ИНН 772452889865, ОГРН 318774600579741</span>
+          <span>115522, РФ, г. Москва, Пролетарский пр-т, д. 17, корп. 1, кв. 454</span>
+        </div>
+        <nav class="site-footer__links" aria-label="Правовые документы">
+          <a href="privacy-policy/">Политика обработки персональных данных</a>
+          <a href="soglasie-na-obrabotku-personalnyh-dannyh/">Согласие на обработку персональных данных</a>
+          <a href="polzovatelskoe-soglashenie/">Пользовательское соглашение</a>
+        </nav>
+        <div class="site-footer__contacts">
+          <button class="phone-reveal-trigger" type="button" data-site-phone aria-haspopup="dialog"><span data-phone-label>+7 (495) ***-**-**</span><span class="phone-reveal-hint">Показать номер</span></button>
+          <a data-site-email href="mailto:get@podemnik-v-arendu.ru">get@podemnik-v-arendu.ru</a>
+        </div>
+      </footer>
+    </div>
+
+    <button class="mobile-cta" type="button" data-open-lead>Подобрать технику</button>
+
+    <div class="cookie-consent" id="cookie-consent" hidden>
+      <div class="cookie-consent__overlay" aria-hidden="true"></div>
+      <div class="cookie-banner" id="cookie-banner" role="dialog" aria-modal="true" aria-label="Уведомление о cookie">
+        <p>
+          Этот сайт использует файлы cookie, чтобы сделать его более удобным для вас.
+          Продолжая использование, вы соглашаетесь с нашей
+          <a href="privacy-policy/" target="_blank" rel="noopener">Политикой в отношении файлов cookie</a>.
+        </p>
+        <button type="button" id="cookie-accept">Принять</button>
+      </div>
+    </div>
+
+    <div class="modal" id="lead-modal" aria-hidden="true">
+      <div class="modal__overlay" data-close-lead></div>
+      <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="lead-title">
+        <button class="modal__close" type="button" aria-label="Закрыть" data-close-lead>×</button>
+        <h2 id="lead-title">Оставьте телефон</h2>
+        <p id="lead-description">Перезвоним и подберем подходящую технику.</p>
+        <form class="lead-form" id="lead-form">
+          <input
+            id="lead-phone"
+            name="phone"
+            type="tel"
+            inputmode="tel"
+            autocomplete="tel"
+            placeholder="+7 (___) ___-__-__"
+            required
+          />
+          <label class="lead-consent">
+            <input id="lead-consent" name="consent" type="checkbox" required />
+            <span>
+              Я даю согласие на обработку персональных данных в соответствии с
+              <a href="soglasie-na-obrabotku-personalnyh-dannyh/" target="_blank" rel="noopener">
+                Согласием на обработку персональных данных
+              </a>
+              и подтверждаю, что ознакомлен с
+              <a href="privacy-policy/" target="_blank" rel="noopener">
+                Политикой в отношении обработки персональных данных
+              </a>
+            </span>
+          </label>
+          <button type="submit">Отправить</button>
+          <span class="lead-form__status" id="lead-status" aria-live="polite"></span>
+        </form>
+      </div>
+    </div>
+
+    <script src="assets/js/phone-reveal.js?v=1"></script>
+    <script src="assets/js/script.js?v=phone-swipe-1"></script>
+  </body>
+</html>
