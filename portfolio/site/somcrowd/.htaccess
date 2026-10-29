@@ -1,0 +1,6 @@
+# Демо-копия сайта-визитки для портфолио
+DirectoryIndex index.html
+Options -Indexes
+<IfModule mod_headers.c>
+  Header set X-Robots-Tag "noindex, nofollow"
+</IfModule>

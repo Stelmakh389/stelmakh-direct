@@ -229,6 +229,7 @@ p { margin: 0; }
 /* Галерея экранов */
 .screens { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .screens figure { margin: 0; }
+.screens--stack { grid-template-columns: 1fr; }
 .screens img { border-radius: 12px; border: 1px solid var(--border-2); cursor: zoom-in; background: #fff; }
 .screens figcaption { margin-top: 10px; color: var(--muted); font-size: 14px; }
 
